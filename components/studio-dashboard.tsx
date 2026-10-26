@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
 import { AgStudioAiModule, type AgStudioApi, type AgStudioMode } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
@@ -19,18 +19,16 @@ interface Props {
 }
 
 export default function StudioDashboard({ ledger, licenseKey, aiEnabled, pageId, mode, onDraft, onApi }: Props) {
-  // Agents read the newest ledger through a ref, so the harness (built once) never sees stale data.
-  const ledgerRef = useRef(ledger);
-  ledgerRef.current = ledger;
-  const onDraftRef = useRef(onDraft);
-  onDraftRef.current = onDraft;
+  // The harness is built once, so agents read the newest ledger through this holder rather than a
+  // value captured at creation. It lives outside React state on purpose: changing it must not re-render.
+  const [live] = useState(() => ({ ledger, onDraft }));
+  useEffect(() => {
+    Object.assign(live, { ledger, onDraft });
+  }, [live, ledger, onDraft]);
 
   const data = useMemo(() => buildStudioData(ledger), [ledger]);
-  const ai = useMemo(
-    () => (aiEnabled ? buildAi({ ledger: () => ledgerRef.current, onDraft: () => onDraftRef.current() }) : undefined),
-    [aiEnabled],
-  );
-  const [initialState] = useMemo(() => [{ ...initialReport, selectedPageId: pageId }], []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [ai] = useState(() => (aiEnabled ? buildAi({ ledger: () => live.ledger, onDraft: () => live.onDraft() }) : undefined));
+  const [initialState] = useState(() => ({ ...initialReport, selectedPageId: pageId }));
 
   return (
     <AgStudioProvider licenseKey={licenseKey} modules={ai ? [AgStudioAiModule] : undefined}>
