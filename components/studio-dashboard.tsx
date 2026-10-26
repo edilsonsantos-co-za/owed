@@ -20,6 +20,17 @@ interface Props {
   onApi: (api: AgStudioApi) => void;
 }
 
+// Without a licence key, AG Studio prints its trial banner through console.error, one line per row of
+// asterisks. Next.js counts each line as an app error, so the banner goes to console.info instead.
+if (typeof window !== 'undefined') {
+  const error = console.error;
+  console.error = (...args: unknown[]) => {
+    const [first] = args;
+    if (args.length === 1 && typeof first === 'string' && /^\*.*\*$/.test(first.trim())) return console.info(first);
+    error(...args);
+  };
+}
+
 // Matches the tokens in app/globals.css so Studio reads as part of the app, not an embed.
 const INK = '#0f1729';
 const theme = studioTheme.withParams({
