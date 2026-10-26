@@ -17,7 +17,7 @@ const card = (title: string, subtitle: string, foot = '') => `<!doctype html><ht
 <div style="font-size:26px;color:#8aa4c0;margin-top:48px">${foot}</div></div></body></html>`;
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const pause = (_page: Page, ms: number) => sleep(ms);
+const pause = (ms: number) => sleep(ms);
 
 /** Opens the dashboard chat panel and sends a prompt, then waits for the agents to go quiet. */
 async function ask(page: Page, prompt: string, settleMs = 150_000) {
@@ -31,10 +31,10 @@ async function ask(page: Page, prompt: string, settleMs = 150_000) {
   await sleep(1500);
 }
 
+/** Opens the Owed AI panel (AG Studio's chat) from the header. */
 async function openChat(page: Page) {
-  const toggle = page.getByRole('button', { name: /assistant|chat|ai/i }).first();
-  if (await toggle.isVisible().catch(() => false)) await toggle.click();
-  await pause(800);
+  await page.getByRole('button', { name: 'Ask Owed' }).first().click();
+  await pause(1200);
 }
 
 export const SHOTS: Shot[] = [
@@ -75,7 +75,7 @@ export const SHOTS: Shot[] = [
     narration:
       'Each morning a Claude agent investigates the account with PayPal\'s own Agent Toolkit and writes a three-line brief: the one thing that matters today.',
     run: async (page) => {
-      await page.getByRole('button', { name: 'Receivables' }).click();
+      await page.getByRole('button', { name: 'Overview' }).click();
       await page.getByText('Checked with PayPal Agent Toolkit').waitFor({ timeout: 120_000 }).catch(() => {});
       await page.mouse.move(500, 95, { steps: 20 });
       await pause(1500);
@@ -96,7 +96,8 @@ export const SHOTS: Shot[] = [
       } else {
         await ask(page, 'Who owes me money right now? Draft reminders for everything overdue, in the right tone for each client.');
       }
-      await page.locator('[data-testid="draft-card"]').first().waitFor({ timeout: 60_000 }).catch(() => {});
+      // New drafts raise a toast with a Review button.
+      await page.getByText(/waiting for your approval/).waitFor({ timeout: 60_000 }).catch(() => {});
       await pause(2000);
     },
   },
@@ -105,8 +106,11 @@ export const SHOTS: Shot[] = [
     narration:
       'Nothing is sent. Every draft lands in my approval queue with its tone and a one-line reason. Friendly for a good client who slipped. Final for Vantage, at forty-eight days. I tweak a line, approve, and Owed sends the reminder through PayPal\'s Invoicing API. The audit log shows the agent drafted it, and I sent it.',
     run: async (page) => {
+      const review = page.getByRole('button', { name: 'Review' });
+      if (await review.isVisible().catch(() => false)) await review.click();
+      else await page.getByRole('button', { name: /Approvals/ }).click();
       const cardEl = page.locator('[data-testid="draft-card"]').first();
-      await cardEl.scrollIntoViewIfNeeded();
+      await cardEl.waitFor({ timeout: 30_000 });
       await pause(2500);
       const note = cardEl.getByLabel('Message');
       await note.click();
@@ -123,6 +127,7 @@ export const SHOTS: Shot[] = [
       'The same chat rebuilds the dashboard. Ask for a chart of overdue amounts by client, and Studio\'s own planning and widget agents add it, live.',
     fast: true,
     run: async (page) => {
+      await openChat(page);
       await ask(page, 'Add a bar chart of overdue amount by client to this page.');
       await pause(2000);
     },

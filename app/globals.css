@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Owed design tokens. Neutral ink UI (buttons, text), emerald for money that has landed,
+   amber/rose for money that is late, violet for anything an agent did. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-line: #e7e9ee;
+  --color-line-strong: #d6dae2;
+  --color-ink: #0f1729;
+  --color-ink-2: #3b4456;
+  --color-muted: #6b7385;
+  --color-faint: #9aa1b0;
+
+  --color-brand: #0f1729;
+  --color-brand-hover: #222c42;
+  --color-ai: #6d4aff;
+  --color-ai-soft: #f1edff;
+  --color-good: #0b8a5f;
+  --color-good-soft: #e7f6ef;
+  --color-warn: #b45d09;
+  --color-warn-soft: #fdf3e4;
+  --color-bad: #c2283c;
+  --color-bad-soft: #fdecee;
+
+  --shadow-card: 0 1px 2px rgb(15 23 41 / 0.04), 0 1px 3px rgb(15 23 41 / 0.06);
+  --shadow-pop: 0 12px 32px -8px rgb(15 23 41 / 0.18), 0 2px 6px rgb(15 23 41 / 0.06);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes owed-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.skeleton {
+  background: linear-gradient(90deg, #eef0f4 25%, #f7f8fa 37%, #eef0f4 63%);
+  background-size: 400% 100%;
+  animation: owed-shimmer 1.6s ease infinite;
+  border-radius: 6px;
+}
+
+@keyframes owed-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast-in {
+  animation: owed-toast-in 180ms ease-out;
 }

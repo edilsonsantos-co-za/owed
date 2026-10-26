@@ -16,7 +16,7 @@ async function ConfiguredApp() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="grid h-dvh place-items-center bg-[#0b1f33] text-white">owed</div>}>
+    <Suspense fallback={<div className="h-dvh bg-canvas" />}>
       <ConfiguredApp />
     </Suspense>
   );

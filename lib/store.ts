@@ -6,6 +6,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { PayPalInvoice } from './paypal';
 import type { ReminderLogEntry, Tone } from './receivables';
+import { money } from './format';
 
 export type DraftKind = 'reminder' | 'invoice';
 export type DraftStatus = 'pending' | 'sent' | 'discarded' | 'failed';
@@ -107,7 +108,7 @@ export async function addDraft(draft: (ReminderDraft | InvoiceDraft) & { rationa
     at: entry.createdAt,
     actor: 'agent',
     action: draft.kind === 'reminder' ? 'drafted reminder' : 'drafted invoice',
-    detail: draft.kind === 'reminder' ? `${draft.client} · ${draft.invoiceNumber} (${draft.tone})` : `${draft.client} · ${draft.amount}`,
+    detail: draft.kind === 'reminder' ? `${draft.client} · ${draft.invoiceNumber} (${draft.tone})` : `${draft.client} · ${money(draft.amount, draft.currency, true)}`,
     invoiceId: draft.kind === 'reminder' ? draft.invoiceId : undefined,
   });
   await save();

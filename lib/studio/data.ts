@@ -4,8 +4,20 @@ import type { AgDataSourcesDefinition, AgFieldDefinition, AgFormat, AgRelationDe
 import type { Ledger } from '@/lib/receivables';
 
 type FieldSpec = [id: string, name: string, format: AgFormat, hide?: boolean];
+// Whole dollars read better on a receivables dashboard than Studio's default two-decimal numbers.
+const FORMAT_OPTIONS: Partial<Record<AgFormat, { format: Intl.NumberFormat }>> = {
+  currencyFormat: { format: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) },
+  decimalFormat: { format: new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 }) },
+  percentageFormat: { format: new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 0 }) },
+};
 const fields = (specs: FieldSpec[]): AgFieldDefinition[] =>
-  specs.map(([id, name, format, hide]) => ({ id, name, format, ...(hide && { hide }) }));
+  specs.map(([id, name, format, hide]) => ({
+    id,
+    name,
+    format,
+    ...(FORMAT_OPTIONS[format] && { formatOptions: FORMAT_OPTIONS[format] }),
+    ...(hide && { hide }),
+  }));
 
 const toClient = (id: string, tableId: string): AgRelationDefinition => ({
   id,
@@ -132,6 +144,7 @@ export function buildStudioData(ledger: Ledger): AgDataSourcesDefinition {
         name: 'Collection Rate',
         description: 'Paid / billed.',
         format: 'percentageFormat',
+        formatOptions: FORMAT_OPTIONS.percentageFormat,
         isMeasure: true,
         expression: { operator: 'divide', inputs: [{ id: 'invoices.paid', aggregation: 'sum' }, { id: 'invoices.total', aggregation: 'sum' }] },
       },

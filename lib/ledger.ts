@@ -1,6 +1,7 @@
 // Loads the receivables ledger from PayPal (live mode) or from the built-in scenario (demo mode),
 // and carries out approved actions against whichever backend is active.
 import 'server-only';
+import { money } from './format';
 import * as paypal from './paypal';
 import { buildLedger, type Ledger } from './receivables';
 import { BUSINESS_NAME, scenarioInvoices } from './scenario';
@@ -83,7 +84,7 @@ export async function sendDraft(id: string, edits?: { subject?: string; note?: s
         due_amount: { currency_code: invoice.currency, value: total },
       });
     }
-    await audit({ actor: 'human', action: 'sent invoice via PayPal', detail: `${current.client} · ${current.amount}`, invoiceId: paypalId });
+    await audit({ actor: 'human', action: 'sent invoice via PayPal', detail: `${current.client} · ${money(current.amount, current.currency, true)}`, invoiceId: paypalId });
     return (await updateDraft(id, { status: 'sent', paypalId }))!;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

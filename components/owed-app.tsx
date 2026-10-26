@@ -1,18 +1,23 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { History, Inbox, LayoutDashboard, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgStudioApi } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
 import type { AuditEntry, Draft } from '@/lib/store';
-import { PAGE_TITLES } from '@/lib/studio/report';
+import { longDate } from '@/lib/format';
+import ActivityLog from './activity-log';
 import ApprovalQueue from './approval-queue';
+import KpiStrip from './kpi-strip';
 import MorningBrief from './morning-brief';
+import type { StudioSurface } from './studio-dashboard';
+import { Badge, Button, Logo, cx } from './ui';
 
 // AG Studio measures the DOM, so it renders in the browser only.
 const StudioDashboard = dynamic(() => import('./studio-dashboard'), {
   ssr: false,
-  loading: () => <div className="grid h-full place-items-center text-sm text-slate-500">Loading dashboard…</div>,
+  loading: () => <div className="skeleton m-4 h-[calc(100%-2rem)]" />,
 });
 
 interface Snapshot {
@@ -21,106 +26,267 @@ interface Snapshot {
   audit: AuditEntry[];
 }
 
-const money = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+type View = 'overview' | 'clients' | 'approvals' | 'activity';
+
+const VIEWS: Record<View, { label: string; icon: LucideIcon; title: string; studioPage?: string }> = {
+  overview: { label: 'Overview', icon: LayoutDashboard, title: 'Receivables', studioPage: 'receivables' },
+  clients: { label: 'Clients', icon: Users, title: 'Clients', studioPage: 'clients' },
+  approvals: { label: 'Approvals', icon: Inbox, title: 'Approvals' },
+  activity: { label: 'Activity', icon: History, title: 'Activity' },
+};
+
+const SUBTITLES: Record<View, string> = {
+  overview: 'What you are owed, how late it is, and when the cash will land.',
+  clients: 'How each client actually pays, from their PayPal invoice history.',
+  approvals: 'Agents draft. You decide what reaches a client.',
+  activity: 'Every draft, approval and PayPal call, newest first.',
+};
+
+interface Toast {
+  id: number;
+  message: string;
+  action?: { label: string; onClick: () => void };
+}
 
 export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licenseKey?: string; aiEnabled: boolean; briefEnabled: boolean }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pageId, setPageId] = useState('receivables');
-  const [editing, setEditing] = useState(false);
+  const [view, setView] = useState<View>('overview');
+  const [surface, setSurface] = useState<StudioSurface>('view');
+  const [refreshing, setRefreshing] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
   const apiRef = useRef<AgStudioApi | null>(null);
+  const studioRef = useRef<HTMLElement | null>(null);
+  const pendingRef = useRef<number | null>(null);
+  const viewRef = useRef(view);
+
+  const notify = useCallback((message: string, action?: Toast['action']) => setToast({ id: Date.now(), message, action }), []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const go = useCallback((next: View) => {
+    setView(next);
+    viewRef.current = next;
+    const page = VIEWS[next].studioPage;
+    const api = apiRef.current;
+    if (page && api) api.setState({ ...api.getState(), selectedPageId: page });
+  }, []);
 
   const refresh = useCallback(async () => {
+    setRefreshing(true);
     const res = await fetch('/api/ledger', { cache: 'no-store' });
     const json = await res.json();
+    setRefreshing(false);
     if (!res.ok) return setError(json.error ?? `HTTP ${res.status}`);
     setError(null);
     setSnapshot(json);
-  }, []);
+    // Agents queue drafts while the owner watches the dashboard, so say when new ones arrive.
+    const pending = (json.drafts as Draft[]).filter((d) => d.status === 'pending').length;
+    const before = pendingRef.current;
+    pendingRef.current = pending;
+    if (before !== null && pending > before && viewRef.current !== 'approvals') {
+      const added = pending - before;
+      notify(`${added} new draft${added === 1 ? '' : 's'} waiting for your approval`, { label: 'Review', onClick: () => go('approvals') });
+    }
+  }, [go, notify]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
   }, [refresh]);
 
-  const goToPage = (id: string) => {
-    setPageId(id);
+  const openCopilot = useCallback(() => {
+    if (!aiEnabled) return;
+    if (!VIEWS[viewRef.current].studioPage) go('overview');
+    setSurface('copilot');
     const api = apiRef.current;
-    if (api) api.setState({ ...api.getState(), selectedPageId: id });
-  };
+    if (api) api.setState({ ...api.getState(), panels: { ...api.getState().panels, ai: { ...api.getState().panels?.ai, collapsed: false } } });
+    requestAnimationFrame(() => studioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [aiEnabled, go]);
 
   const ledger = snapshot?.ledger;
-  const overdue = ledger?.invoices.reduce((a, i) => a + i.overdueAmount, 0) ?? 0;
-  const outstanding = ledger?.invoices.reduce((a, i) => a + i.outstanding, 0) ?? 0;
+  const pending = snapshot?.drafts.filter((d) => d.status === 'pending').length ?? 0;
+  const live = ledger?.mode === 'live';
+  const studioVisible = !!VIEWS[view].studioPage;
 
   return (
-    <div className="flex h-dvh flex-col bg-slate-100 text-slate-900">
-      <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-slate-200 bg-[#0b1f33] px-5 py-3 text-white">
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-bold tracking-tight">owed</span>
-          <span className="text-xs text-slate-300">AI collections copilot for PayPal invoices</span>
+    <div className="flex h-dvh bg-canvas text-ink">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
+        <div className="flex items-center gap-2.5 px-5 pb-4 pt-5">
+          <Logo />
+          <span className="text-[17px] font-semibold tracking-tight">Owed</span>
         </div>
-        <nav className="flex gap-1">
-          {Object.entries(PAGE_TITLES).map(([id, title]) => (
-            <button
-              key={id}
-              onClick={() => goToPage(id)}
-              className={`rounded-md px-3 py-1 text-sm ${pageId === id ? 'bg-white/15 font-semibold' : 'text-slate-300 hover:bg-white/10'}`}
-            >
-              {title}
-            </button>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-4 text-sm">
-          {ledger && (
-            <>
-              <span>
-                Outstanding <strong>{money(outstanding)}</strong>
-              </span>
-              <span className="text-rose-200">
-                Overdue <strong>{money(overdue)}</strong>
-              </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ledger.mode === 'live' ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200'}`}
-                title={ledger.mode === 'live' ? 'Reading and writing your PayPal sandbox account' : 'No PayPal credentials: using built-in demo data'}
+        <div className="mx-3 mb-3 rounded-lg border border-line px-3 py-2">
+          <p className="truncate text-[13px] font-semibold">{ledger?.business ?? 'Loading…'}</p>
+          <p className="text-xs text-muted">{live ? 'PayPal sandbox account' : 'Demo workspace'}</p>
+        </div>
+        <nav className="flex flex-col gap-0.5 px-3" aria-label="Main">
+          {(Object.keys(VIEWS) as View[]).map((id) => {
+            const item = VIEWS[id];
+            return (
+              <button
+                key={id}
+                onClick={() => go(id)}
+                aria-current={view === id ? 'page' : undefined}
+                className={cx(
+                  'flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors',
+                  view === id ? 'bg-black/[0.05] font-semibold text-ink' : 'text-ink-2 hover:bg-black/[0.03]',
+                )}
               >
-                {ledger.mode === 'live' ? 'PayPal sandbox · live' : 'Demo data'}
-              </span>
-            </>
+                <item.icon className={cx('size-4', view === id ? 'text-ink' : 'text-muted')} />
+                {item.label}
+                {id === 'approvals' && pending > 0 && <span className="ml-auto rounded-full bg-ai px-1.5 text-[11px] font-semibold leading-5 text-white">{pending}</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto space-y-2 p-3">
+          <div className="rounded-lg border border-line p-3 text-xs">
+            <p className="mb-2 font-semibold text-ink">Connections</p>
+            <p className="flex items-center gap-2 text-ink-2">
+              <span className={cx('size-2 rounded-full', live ? 'bg-good' : 'bg-amber-400')} />
+              PayPal {live ? 'sandbox' : '· demo data'}
+            </p>
+            <p className="mt-1.5 flex items-center gap-2 text-ink-2">
+              <span className={cx('size-2 rounded-full', aiEnabled ? 'bg-good' : 'bg-faint')} />
+              Claude agents {aiEnabled ? '' : '· off'}
+            </p>
+          </div>
+          <p className="px-1 text-[11px] leading-snug text-faint">Agents only draft. Nothing reaches a client without your approval.</p>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex flex-wrap items-center gap-3 border-b border-line bg-surface/80 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex items-center gap-2 lg:hidden">
+            <Logo size={24} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold tracking-tight">{VIEWS[view].title}</h1>
+              {ledger && !live && <Badge tone="warn">Demo data</Badge>}
+            </div>
+            <p className="hidden text-[13px] text-muted sm:block">
+              {SUBTITLES[view]}
+              {ledger && view === 'overview' && <span className="text-faint"> · {longDate(ledger.asOf)}</span>}
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => void refresh()} aria-label="Refresh" title="Reload invoices from PayPal">
+              <RefreshCw className={cx('size-4', refreshing && 'animate-spin')} />
+            </Button>
+            {studioVisible && (
+              <Button
+                variant={surface === 'customize' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => setSurface(surface === 'customize' ? 'view' : 'customize')}
+              >
+                <PanelsTopLeft className="size-4" />
+                {surface === 'customize' ? 'Done' : 'Customize'}
+              </Button>
+            )}
+            <Button
+              variant="ai"
+              size="sm"
+              onClick={() => (surface === 'copilot' && studioVisible ? setSurface('view') : openCopilot())}
+              disabled={!aiEnabled}
+              title={aiEnabled ? 'Chat with the Owed agents' : 'Set ANTHROPIC_API_KEY to enable the agents'}
+            >
+              <Sparkles className="size-4" />
+              {surface === 'copilot' && studioVisible ? 'Close Owed AI' : 'Ask Owed'}
+            </Button>
+          </div>
+          <nav className="flex w-full gap-1 overflow-x-auto lg:hidden" aria-label="Main">
+            {(Object.keys(VIEWS) as View[]).map((id) => (
+              <button
+                key={id}
+                onClick={() => go(id)}
+                className={cx('whitespace-nowrap rounded-lg px-3 py-1.5 text-sm', view === id ? 'bg-black/[0.06] font-semibold' : 'text-ink-2')}
+              >
+                {VIEWS[id].label}
+                {id === 'approvals' && pending > 0 && ` (${pending})`}
+              </button>
+            ))}
+          </nav>
+        </header>
+
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-6">
+            {error && <div className="rounded-lg border border-bad/20 bg-bad-soft px-4 py-3 text-sm text-bad">Could not load PayPal data: {error}</div>}
+
+            {view === 'overview' &&
+              (ledger ? (
+                <>
+                  <KpiStrip ledger={ledger} />
+                  <MorningBrief key={ledger.asOf} ledger={ledger} enabled={briefEnabled} onAsk={aiEnabled ? openCopilot : undefined} />
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="skeleton h-[118px] rounded-xl" />
+                  ))}
+                </div>
+              ))}
+
+            <section
+              ref={studioRef}
+              className={cx('scroll-mt-4 overflow-hidden rounded-xl', !studioVisible && 'hidden')}
+              // 36 layout rows of 20px (see lib/studio/report.ts); the AI panel needs at least this much room too.
+              style={{ height: surface === 'view' ? 724 : 'max(724px, calc(100dvh - 120px))' }}
+              aria-label="Dashboard"
+            >
+              {ledger ? (
+                <StudioDashboard
+                  ledger={ledger}
+                  licenseKey={licenseKey}
+                  aiEnabled={aiEnabled}
+                  pageId={VIEWS[view].studioPage ?? 'receivables'}
+                  surface={surface}
+                  onDraft={() => void refresh()}
+                  onApi={(api) => (apiRef.current = api)}
+                />
+              ) : (
+                <div className="skeleton h-full" />
+              )}
+            </section>
+
+            {view === 'approvals' && snapshot && (
+              <ApprovalQueue drafts={snapshot.drafts} live={live} onChange={() => void refresh()} onAsk={aiEnabled ? openCopilot : undefined} onNotify={notify} />
+            )}
+            {view === 'activity' && snapshot && <ActivityLog audit={snapshot.audit} />}
+          </div>
+        </main>
+      </div>
+
+      {toast && (
+        <div
+          key={toast.id}
+          role="status"
+          className="toast-in fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-xl bg-ink py-2.5 pl-4 pr-2 text-sm text-white shadow-[var(--shadow-pop)]"
+        >
+          <Sparkles className="size-4 text-[#b9a6ff]" />
+          {toast.message}
+          {toast.action && (
+            <button
+              onClick={() => {
+                toast.action!.onClick();
+                setToast(null);
+              }}
+              className="rounded-lg bg-white/10 px-2.5 py-1 text-[13px] font-semibold hover:bg-white/20"
+            >
+              {toast.action.label}
+            </button>
           )}
-          <button
-            onClick={() => setEditing(!editing)}
-            className={`rounded-md border border-white/20 px-2 py-1 text-xs hover:bg-white/10 ${editing ? 'bg-white/15' : ''}`}
-          >
-            {editing ? 'Done editing' : 'Edit dashboard'}
-          </button>
-          <button onClick={() => void refresh()} className="rounded-md border border-white/20 px-2 py-1 text-xs hover:bg-white/10">
-            Refresh
+          <button onClick={() => setToast(null)} aria-label="Dismiss" className="rounded-md p-1 text-white/60 hover:text-white">
+            <X className="size-4" />
           </button>
         </div>
-      </header>
-
-      {error && <div className="bg-rose-50 px-5 py-2 text-sm text-rose-800">Could not load PayPal data: {error}</div>}
-      {briefEnabled && ledger && <MorningBrief key={ledger.asOf} />}
-
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="min-h-[540px] overflow-hidden rounded-xl border border-slate-200 bg-white">
-          {ledger ? (
-            <StudioDashboard
-              ledger={ledger}
-              licenseKey={licenseKey}
-              aiEnabled={aiEnabled}
-              pageId={pageId}
-              mode={editing ? 'edit' : 'view'}
-              onDraft={() => void refresh()}
-              onApi={(api) => (apiRef.current = api)}
-            />
-          ) : (
-            <div className="grid h-full place-items-center text-sm text-slate-500">{error ? 'No data' : 'Fetching invoices from PayPal…'}</div>
-          )}
-        </section>
-        {snapshot && <ApprovalQueue drafts={snapshot.drafts} audit={snapshot.audit} live={snapshot.ledger.mode === 'live'} onChange={() => void refresh()} />}
-      </main>
+      )}
     </div>
   );
 }

@@ -14,6 +14,10 @@ AG Studio dashboard the same agents can rebuild on request.
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
 
+![Owed receivables overview](docs/screenshots/overview.png)
+
+![Approvals inbox](docs/screenshots/approvals.png)
+
 ## What it does
 
 - **Live receivables dashboard** (AG Studio) over your PayPal sandbox invoices: outstanding and overdue,
@@ -80,10 +84,11 @@ npm run dev
 
 ### Try this
 
-1. Open the chat panel in the dashboard and pick **Chase overdue invoices**.
+1. Press **Ask Owed** (top right) and pick **Chase overdue invoices**.
 2. Watch the lead hand off to the collections agent, which checks each client's history and drafts reminders.
-3. Review the drafts in the approval queue on the right: note the different tones and the one-line rationale.
-   Edit one, then **Approve & send via PayPal**. The audit log records it and the invoice's reminder count goes up.
+3. When the "new drafts" toast appears, press **Review**. The **Approvals** inbox shows each draft with its tone and
+   the agent's reasoning. Edit one, then **Approve & send via PayPal**. **Activity** records it and the invoice's
+   reminder count goes up.
 4. Ask the chat to **"add a chart of overdue amount by client"**: Studio's own agents build the widget.
 5. Ask **"Invoice Fernhill Yoga for this month's social content pack, same as last time"** and approve the draft.
 
@@ -91,7 +96,7 @@ npm run dev
 
 ```
 app/
-  page.tsx                  shell (server) → components/owed-app.tsx (client)
+  page.tsx                  shell (server) → components/owed-app.tsx (client: sidebar, views, toasts)
   api/ledger                GET   PayPal invoices → receivables model (or demo scenario)
   api/drafts                POST  agents queue a reminder/invoice draft (never touches PayPal)
   api/drafts/[id]           POST  human approves → PayPal remind / create+send; or discard
