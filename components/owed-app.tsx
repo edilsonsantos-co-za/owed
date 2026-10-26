@@ -1,18 +1,22 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { History, Inbox, LayoutDashboard, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
+import { CircleHelp, History, Inbox, LayoutDashboard, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AgStudioApi } from 'ag-studio';
+import type { AgReportState, AgStudioApi } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
 import type { AuditEntry, Draft } from '@/lib/store';
 import { longDate } from '@/lib/format';
+import { savePages } from '@/lib/layout';
+import { initialReport, PAGE_TITLES } from '@/lib/studio/report';
 import ActivityLog from './activity-log';
 import ApprovalQueue from './approval-queue';
+import EditorBar from './editor-bar';
 import KpiStrip from './kpi-strip';
 import MorningBrief from './morning-brief';
 import type { StudioSurface } from './studio-dashboard';
 import { Badge, Button, Logo, cx } from './ui';
+import WelcomeTour, { SETUP_STEP, tourSeen, type TourTarget } from './welcome-tour';
 
 // AG Studio measures the DOM, so it renders in the browser only.
 const StudioDashboard = dynamic(() => import('./studio-dashboard'), {
@@ -29,8 +33,18 @@ interface Snapshot {
 type View = 'overview' | 'clients' | 'approvals' | 'activity';
 
 const VIEWS: Record<View, { label: string; icon: LucideIcon; title: string; studioPage?: string }> = {
-  overview: { label: 'Overview', icon: LayoutDashboard, title: 'Receivables', studioPage: 'receivables' },
-  clients: { label: 'Clients', icon: Users, title: 'Clients', studioPage: 'clients' },
+  overview: {
+    label: 'Overview',
+    icon: LayoutDashboard,
+    title: 'Receivables',
+    studioPage: 'receivables',
+  },
+  clients: {
+    label: 'Clients',
+    icon: Users,
+    title: 'Clients',
+    studioPage: 'clients',
+  },
   approvals: { label: 'Approvals', icon: Inbox, title: 'Approvals' },
   activity: { label: 'Activity', icon: History, title: 'Activity' },
 };
@@ -59,6 +73,17 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
   const studioRef = useRef<HTMLElement | null>(null);
   const pendingRef = useRef<number | null>(null);
   const viewRef = useRef(view);
+  const [tour, setTour] = useState<{ open: boolean; step: number }>({
+    open: false,
+    step: 0,
+  });
+  const [history, setHistory] = useState({
+    canUndo: false,
+    canRedo: false,
+    reset: false,
+  });
+  // The dashboard as it was when the editor opened, so Cancel can put it back.
+  const beforeEditRef = useRef<AgReportState | null>(null);
 
   const notify = useCallback((message: string, action?: Toast['action']) => setToast({ id: Date.now(), message, action }), []);
 
@@ -99,14 +124,83 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    // First visit: explain the app before anything else. Read after mount, since localStorage is browser-only.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!tourSeen()) setTour({ open: true, step: 0 });
+  }, []);
+
   const openCopilot = useCallback(() => {
     if (!aiEnabled) return;
     if (!VIEWS[viewRef.current].studioPage) go('overview');
     setSurface('copilot');
     const api = apiRef.current;
-    if (api) api.setState({ ...api.getState(), panels: { ...api.getState().panels, ai: { ...api.getState().panels?.ai, collapsed: false } } });
+    if (api)
+      api.setState({
+        ...api.getState(),
+        panels: {
+          ...api.getState().panels,
+          ai: { ...api.getState().panels?.ai, collapsed: false },
+        },
+      });
     requestAnimationFrame(() => studioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }, [aiEnabled, go]);
+
+  const startEditing = useCallback(() => {
+    if (!VIEWS[viewRef.current].studioPage) go('overview');
+    const api = apiRef.current;
+    if (api) {
+      beforeEditRef.current = api.getState();
+      api.clearHistory();
+    }
+    setHistory({ canUndo: false, canRedo: false, reset: false });
+    setSurface('customize');
+  }, [go]);
+
+  const finishEditing = useCallback(
+    (keep: boolean) => {
+      const api = apiRef.current;
+      if (api) {
+        if (keep) savePages(api.getState().pages);
+        else if (beforeEditRef.current)
+          api.setState({
+            ...beforeEditRef.current,
+            selectedPageId: api.getState().selectedPageId,
+          });
+      }
+      beforeEditRef.current = null;
+      setSurface('view');
+      if (keep) notify('Dashboard saved');
+    },
+    [notify],
+  );
+
+  const resetLayout = useCallback(() => {
+    const api = apiRef.current;
+    if (!api) return;
+    api.setState({ ...api.getState(), pages: initialReport.pages });
+    setHistory((h) => ({ ...h, reset: true }));
+  }, []);
+
+  const onStudioState = useCallback(() => {
+    const api = apiRef.current;
+    if (!api) return;
+    const h = api.getHistory();
+    setHistory((prev) => ({
+      ...prev,
+      canUndo: h.undo.length > 0,
+      canRedo: h.redo.length > 0,
+    }));
+  }, []);
+
+  const showFromTour = useCallback(
+    (target: TourTarget) => {
+      if (target === 'customize') return startEditing();
+      if (target === 'ask') return aiEnabled ? openCopilot() : setTour({ open: true, step: SETUP_STEP });
+      go(target);
+    },
+    [aiEnabled, go, openCopilot, startEditing],
+  );
 
   const ledger = snapshot?.ledger;
   const pending = snapshot?.drafts.filter((d) => d.status === 'pending').length ?? 0;
@@ -139,15 +233,31 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
               >
                 <item.icon className={cx('size-4', view === id ? 'text-ink' : 'text-muted')} />
                 {item.label}
-                {id === 'approvals' && pending > 0 && <span className="ml-auto rounded-full bg-ai px-1.5 text-[11px] font-semibold leading-5 text-white">{pending}</span>}
+                {id === 'approvals' && pending > 0 && (
+                  <span className="ml-auto rounded-full bg-ai px-1.5 text-[11px] font-semibold leading-5 text-white">{pending}</span>
+                )}
               </button>
             );
           })}
         </nav>
 
         <div className="mt-auto space-y-2 p-3">
-          <div className="rounded-lg border border-line p-3 text-xs">
-            <p className="mb-2 font-semibold text-ink">Connections</p>
+          <button
+            onClick={() => setTour({ open: true, step: 0 })}
+            className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm text-ink-2 hover:bg-black/[0.03]"
+          >
+            <CircleHelp className="size-4 text-muted" />
+            How Owed works
+          </button>
+          <button
+            onClick={() => setTour({ open: true, step: SETUP_STEP })}
+            className="block w-full rounded-lg border border-line p-3 text-left text-xs hover:border-line-strong hover:bg-canvas"
+            title="See what to connect and how"
+          >
+            <p className="mb-2 flex items-center font-semibold text-ink">
+              Connections
+              <span className="ml-auto font-medium text-ai">Set up</span>
+            </p>
             <p className="flex items-center gap-2 text-ink-2">
               <span className={cx('size-2 rounded-full', live ? 'bg-good' : 'bg-amber-400')} />
               PayPal {live ? 'sandbox' : '· demo data'}
@@ -156,7 +266,7 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
               <span className={cx('size-2 rounded-full', aiEnabled ? 'bg-good' : 'bg-faint')} />
               Claude agents {aiEnabled ? '' : '· off'}
             </p>
-          </div>
+          </button>
           <p className="px-1 text-[11px] leading-snug text-faint">Agents only draft. Nothing reaches a client without your approval.</p>
         </div>
       </aside>
@@ -180,14 +290,20 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
             <Button variant="ghost" size="sm" onClick={() => void refresh()} aria-label="Refresh" title="Reload invoices from PayPal">
               <RefreshCw className={cx('size-4', refreshing && 'animate-spin')} />
             </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTour({ open: true, step: 0 })}
+              aria-label="How Owed works"
+              title="How Owed works"
+              className="lg:hidden"
+            >
+              <CircleHelp className="size-4" />
+            </Button>
             {studioVisible && (
-              <Button
-                variant={surface === 'customize' ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setSurface(surface === 'customize' ? 'view' : 'customize')}
-              >
+              <Button size="sm" onClick={startEditing} title="Edit this dashboard full screen">
                 <PanelsTopLeft className="size-4" />
-                {surface === 'customize' ? 'Done' : 'Customize'}
+                Customize
               </Button>
             )}
             <Button
@@ -235,33 +351,80 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
 
             <section
               ref={studioRef}
-              className={cx('scroll-mt-4 overflow-hidden rounded-xl', !studioVisible && 'hidden')}
-              // 36 layout rows of 20px (see lib/studio/report.ts); the AI panel needs at least this much room too.
-              style={{ height: surface === 'view' ? 724 : 'max(724px, calc(100dvh - 120px))' }}
-              aria-label="Dashboard"
-            >
-              {ledger ? (
-                <StudioDashboard
-                  ledger={ledger}
-                  licenseKey={licenseKey}
-                  aiEnabled={aiEnabled}
-                  pageId={VIEWS[view].studioPage ?? 'receivables'}
-                  surface={surface}
-                  onDraft={() => void refresh()}
-                  onApi={(api) => (apiRef.current = api)}
-                />
-              ) : (
-                <div className="skeleton h-full" />
+              className={cx(
+                surface === 'customize' ? 'fixed inset-0 z-50 flex flex-col bg-canvas' : 'scroll-mt-4 overflow-hidden rounded-xl',
+                !studioVisible && 'hidden',
               )}
+              aria-label={surface === 'customize' ? 'Dashboard editor' : 'Dashboard'}
+            >
+              {surface === 'customize' && (
+                <EditorBar
+                  pages={initialReport.pages.map((p) => ({
+                    id: p.id,
+                    title: PAGE_TITLES[p.id] ?? p.id,
+                  }))}
+                  pageId={VIEWS[view].studioPage ?? 'receivables'}
+                  canUndo={history.canUndo}
+                  canRedo={history.canRedo}
+                  dirty={history.canUndo || history.reset}
+                  onPage={(id) => go(id === 'clients' ? 'clients' : 'overview')}
+                  onUndo={() => apiRef.current?.undo()}
+                  onRedo={() => apiRef.current?.redo()}
+                  onReset={resetLayout}
+                  onCancel={() => finishEditing(false)}
+                  onSave={() => finishEditing(true)}
+                />
+              )}
+              <div
+                className={cx(surface === 'customize' && 'min-h-0 flex-1')}
+                // 36 layout rows of 20px (see lib/studio/report.ts); the AI panel needs at least this much room too.
+                style={
+                  surface === 'customize'
+                    ? undefined
+                    : {
+                        height: surface === 'view' ? 724 : 'max(724px, calc(100dvh - 120px))',
+                      }
+                }
+              >
+                {ledger ? (
+                  <StudioDashboard
+                    ledger={ledger}
+                    licenseKey={licenseKey}
+                    aiEnabled={aiEnabled}
+                    pageId={VIEWS[view].studioPage ?? 'receivables'}
+                    surface={surface}
+                    onDraft={() => void refresh()}
+                    onApi={(api) => (apiRef.current = api)}
+                    onStateUpdated={onStudioState}
+                  />
+                ) : (
+                  <div className="skeleton h-full" />
+                )}
+              </div>
             </section>
 
             {view === 'approvals' && snapshot && (
-              <ApprovalQueue drafts={snapshot.drafts} live={live} onChange={() => void refresh()} onAsk={aiEnabled ? openCopilot : undefined} onNotify={notify} />
+              <ApprovalQueue
+                drafts={snapshot.drafts}
+                live={live}
+                onChange={() => void refresh()}
+                onAsk={aiEnabled ? openCopilot : undefined}
+                onNotify={notify}
+              />
             )}
             {view === 'activity' && snapshot && <ActivityLog audit={snapshot.audit} />}
           </div>
         </main>
       </div>
+
+      <WelcomeTour
+        key={`${tour.open}-${tour.step}`}
+        open={tour.open}
+        initialStep={tour.step}
+        setup={{ paypal: live, claude: aiEnabled, studio: !!licenseKey }}
+        onClose={() => setTour((t) => ({ ...t, open: false }))}
+        onShow={showFromTour}
+      />
 
       {toast && (
         <div

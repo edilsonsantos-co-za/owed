@@ -82,6 +82,8 @@ npm run seed          # creates ~29 invoices across 7 clients, records payments 
 npm run dev
 ```
 
+[docs/testing.md](docs/testing.md) is a stage-by-stage test checklist.
+
 ### Try this
 
 1. Press **Ask Owed** (top right) and pick **Chase overdue invoices**.

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
-import { AgStudioAiModule, studioTheme, type AgPanelConfig, type AgStudioApi } from 'ag-studio';
+import { AgStudioAiModule, studioTheme, type AgPanelConfig, type AgReportState, type AgStudioApi } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
 import { buildStudioData } from '@/lib/studio/data';
 import { initialReport } from '@/lib/studio/report';
 import { buildAi } from '@/lib/studio/agents';
+import { loadPages } from '@/lib/layout';
 
 export type StudioSurface = 'view' | 'copilot' | 'customize';
 
@@ -18,6 +19,7 @@ interface Props {
   surface: StudioSurface;
   onDraft: () => void;
   onApi: (api: AgStudioApi) => void;
+  onStateUpdated?: (state: AgReportState) => void;
 }
 
 // Without a licence key, AG Studio prints its trial banner through console.error, one line per row of
@@ -101,7 +103,7 @@ const PANELS: Record<StudioSurface, AgPanelConfig> = {
   customize: { view: { left: [], right: [] }, edit: { left: ['data'], right: ['edit', 'filters'] } },
 };
 
-export default function StudioDashboard({ ledger, licenseKey, aiEnabled, pageId, surface, onDraft, onApi }: Props) {
+export default function StudioDashboard({ ledger, licenseKey, aiEnabled, pageId, surface, onDraft, onApi, onStateUpdated }: Props) {
   // The harness is built once, so agents read the newest ledger through this holder rather than a
   // value captured at creation. It lives outside React state on purpose: changing it must not re-render.
   const [live] = useState(() => ({ ledger, onDraft }));
@@ -111,7 +113,12 @@ export default function StudioDashboard({ ledger, licenseKey, aiEnabled, pageId,
 
   const data = useMemo(() => buildStudioData(ledger), [ledger]);
   const [ai] = useState(() => (aiEnabled ? buildAi({ ledger: () => live.ledger, onDraft: () => live.onDraft() }) : undefined));
-  const [initialState] = useState(() => ({ ...initialReport, selectedPageId: pageId, panels: { ai: { collapsed: false, width: 420 } } }));
+  const [initialState] = useState(() => ({
+    ...initialReport,
+    pages: loadPages() ?? initialReport.pages,
+    selectedPageId: pageId,
+    panels: { ai: { collapsed: false, width: 420 } },
+  }));
 
   return (
     <AgStudioProvider licenseKey={licenseKey} modules={ai ? [AgStudioAiModule] : undefined}>
@@ -125,6 +132,7 @@ export default function StudioDashboard({ ledger, licenseKey, aiEnabled, pageId,
         initialState={initialState}
         localeText={{ aiMessageInputPlaceholder: 'Ask Owed about your invoices, clients or this dashboard…' }}
         onApiReady={(event) => onApi(event.api)}
+        onStateUpdated={onStateUpdated && ((event) => onStateUpdated(event.state))}
       />
     </AgStudioProvider>
   );
