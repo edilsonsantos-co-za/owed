@@ -82,7 +82,7 @@ npm run seed          # creates ~29 invoices across 7 clients, records payments 
 npm run dev
 ```
 
-[docs/testing.md](docs/testing.md) is a stage-by-stage test checklist.
+[docs/testing.md](docs/testing.md) is a stage-by-stage test checklist. [docs/status.md](docs/status.md) records where the project stands and what comes next.
 
 ### Try this
 
