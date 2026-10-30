@@ -37,7 +37,7 @@ In this order, in `.env.local` (copy `.env.example`), restarting `npm run dev` a
 ## Running it locally
 
 ```bash
-cd ~/workspace/owed
+cd ~/workspace/edilsonsantos-co-za/owed
 npm ci                    # only if node_modules is missing
 npm run dev -- -p 3311    # http://localhost:3311
 ```
