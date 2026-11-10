@@ -225,36 +225,57 @@ const STEPS: Step[] = [
   },
 ];
 
+/** True on the hosted demo, where visitors can't edit .env.local, so the setup step shows status instead. */
+const isHosted = () => {
+  try {
+    return !['localhost', '127.0.0.1'].includes(window.location.hostname);
+  } catch {
+    return false;
+  }
+};
+
+export const setupTitle = (setup: Setup) =>
+  isHosted() || (setup.paypal && setup.claude) ? 'Connected and ready' : 'Connect your accounts';
+
 function SetupStep({ setup }: { setup: Setup }) {
+  const hosted = isHosted();
   const rows = [
     {
       done: setup.paypal,
       name: 'PayPal sandbox',
-      what: 'Real invoices, payments and reminders',
+      what: setup.paypal ? 'Live sandbox invoices, payments and reminders' : 'Real invoices, payments and reminders',
       how: 'PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from developer.paypal.com, then npm run seed',
       off: 'Using built-in demo data',
     },
     {
       done: setup.claude,
       name: 'Claude (Anthropic API)',
-      what: 'Ask Owed, the agents and the morning brief',
+      what: 'Ask Owed, the collections agent and the morning brief',
       how: 'ANTHROPIC_API_KEY from console.anthropic.com',
       off: 'Agents are off',
     },
     {
       done: setup.studio,
       name: 'AG Studio licence',
-      what: 'Removes the trial watermark',
+      what: setup.studio ? 'Dashboard and agent framework, fully licensed' : 'Removes the trial watermark',
       how: 'AG_STUDIO_LICENSE_KEY, free 45-day trial from AG Grid',
       off: 'Trial watermark shows',
     },
   ];
   return (
     <>
-      <p className="text-sm leading-relaxed text-ink-2">
-        Owed works on demo data out of the box. Add these to <code className="rounded bg-sunken px-1 text-[13px]">.env.local</code> and restart the server
-        to switch each one on.
-      </p>
+      {hosted ? (
+        <p className="text-sm leading-relaxed text-ink-2">
+          This hosted demo is already connected: it reads a <b className="text-ink">PayPal sandbox</b> business (seven clients, no real money) and its agents
+          run on <b className="text-ink">Claude</b>. Try <b className="text-ink">Ask Owed</b> → &quot;Chase everyone more than 30 days late&quot;, then approve a
+          draft in Approvals.
+        </p>
+      ) : (
+        <p className="text-sm leading-relaxed text-ink-2">
+          Owed works on demo data out of the box. Add these to <code className="rounded bg-sunken px-1 text-[13px]">.env.local</code> and restart the server
+          to switch each one on.
+        </p>
+      )}
       <ul className="mt-4 divide-y divide-line rounded-[22px] bg-sunken/60">
         {rows.map((r) => (
           <li key={r.name} className="flex gap-3 p-3">
@@ -264,11 +285,16 @@ function SetupStep({ setup }: { setup: Setup }) {
                 {r.name} <span className={cx('ml-1 font-normal', r.done ? 'text-good' : 'text-muted')}>{r.done ? 'Connected' : r.off}</span>
               </p>
               <p className="text-muted">{r.what}</p>
-              {!r.done && <p className="mt-1 text-xs text-ink-2">{r.how}</p>}
+              {!r.done && !hosted && <p className="mt-1 text-xs text-ink-2">{r.how}</p>}
             </div>
           </li>
         ))}
       </ul>
+      {hosted && (
+        <p className="mt-3 text-xs leading-relaxed text-muted">
+          Want it on your own PayPal account? The code is open source: github.com/edilsonsantos-co-za/owed
+        </p>
+      )}
     </>
   );
 }
@@ -407,7 +433,7 @@ export default function WelcomeTour({
               <Icon className="size-5" />
             </span>
             <h2 id="tour-title" className="serif text-[22px] leading-tight text-ink">
-              {current?.title ?? 'Connect your accounts'}
+              {current?.title ?? setupTitle(setup)}
             </h2>
           </div>
           <div className="mt-3">{current ? current.body : <SetupStep setup={setup} />}</div>
