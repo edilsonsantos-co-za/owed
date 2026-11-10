@@ -14,6 +14,9 @@ AG Studio dashboard the same agents can rebuild on request.
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
 
+**Live demo:** <https://owed.edilsonsantos.co.za>. The landing page is public. Create a free account (sign-in is
+DataSparkLab SSO, powered by Logto) to open the dashboard. Judges can use the test account given in the Devpost testing notes.
+
 ![Owed receivables overview](docs/screenshots/overview.png)
 
 ![Approvals inbox](docs/screenshots/approvals.png)
@@ -81,6 +84,18 @@ PayPal sandbox credentials, seed your sandbox and Owed works against it for real
 npm run seed          # creates ~29 invoices across 7 clients, records payments on the paid ones
 npm run dev
 ```
+
+Sign-in is optional locally: leave `LOGTO_*` empty and the dashboard at `/app` is open. With them set, `/app`,
+`/admin` (owner's sign-up list, Logto role `es-owner`) and the API need an SSO session; `/` stays public.
+[docs/keys.md](docs/keys.md) explains how to get each key.
+
+## Deploy
+
+Every push to `main` deploys to the VPS ([.github/workflows/deploy.yml](.github/workflows/deploy.yml)). The workflow ships the
+committed files and runs `scripts/deploy/server-env.sh`, which fills the server's `.env` with the SSO link, a session secret
+and the API keys from GitHub secrets. Then it builds the [Dockerfile](Dockerfile) (Next.js standalone) and starts the `owed`
+container on the shared `milkyway` Docker network ([docker-compose.yml](docker-compose.yml)). Nginx Proxy Manager serves
+`owed.edilsonsantos.co.za` → `http://owed:3000`. Sign-ups are kept in the `owed-data` volume (`.data/users.json`).
 
 [docs/testing.md](docs/testing.md) is a stage-by-stage test checklist. [docs/status.md](docs/status.md) records where the project stands and what comes next.
 

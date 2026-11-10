@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { CircleHelp, History, Inbox, LayoutDashboard, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
+import { CircleHelp, History, Inbox, LayoutDashboard, LogOut, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgReportState, AgStudioApi } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
@@ -62,7 +62,23 @@ interface Toast {
   action?: { label: string; onClick: () => void };
 }
 
-export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licenseKey?: string; aiEnabled: boolean; briefEnabled: boolean }) {
+export interface AppUser {
+  name?: string;
+  email?: string;
+  owner?: boolean;
+}
+
+export default function OwedApp({
+  licenseKey,
+  aiEnabled,
+  briefEnabled,
+  user,
+}: {
+  licenseKey?: string;
+  aiEnabled: boolean;
+  briefEnabled: boolean;
+  user?: AppUser | null;
+}) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<View>('overview');
@@ -268,6 +284,24 @@ export default function OwedApp({ licenseKey, aiEnabled, briefEnabled }: { licen
             </p>
           </button>
           <p className="px-1 text-[11px] leading-snug text-faint">Agents only draft. Nothing reaches a client without your approval.</p>
+          {user && (
+            <div className="flex items-center gap-2 border-t border-line px-1 pt-3">
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ai-soft text-xs font-semibold text-ai">
+                {(user.name || user.email || '?').slice(0, 1).toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold">{user.name || user.email}</span>
+                {user.owner ? (
+                  <a href="/admin" className="block text-[11px] text-ai hover:underline">Sign-ups</a>
+                ) : (
+                  <span className="block truncate text-[11px] text-muted">{user.email}</span>
+                )}
+              </span>
+              <a href="/auth/sign-out" className="text-[11px] font-medium text-muted hover:text-ink" title="Sign out">
+                <LogOut className="size-4" />
+              </a>
+            </div>
+          )}
         </div>
       </aside>
 

@@ -6,7 +6,7 @@ services:
     plan: starter
     buildCommand: npm ci && npm run build
     startCommand: npm start
-    healthCheckPath: /api/ledger
+    healthCheckPath: /api/health
     disk:
       name: owed-data
       mountPath: /opt/render/project/src/.data

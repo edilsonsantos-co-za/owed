@@ -1,0 +1,20 @@
+# Production: container `owed` on the shared milkyway network; Nginx Proxy Manager serves
+# owed.edilsonsantos.co.za -> http://owed:3000. Secrets live in the server-only .env (see .env.example).
+services:
+  owed:
+    container_name: owed
+    build: .
+    image: owed:prod
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - owed-data:/app/.data
+    networks:
+      - milkyway
+
+volumes:
+  owed-data:
+
+networks:
+  milkyway:
+    external: true

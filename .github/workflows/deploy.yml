@@ -1,0 +1,120 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits for the running one instead of cancelling it mid-way
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Ships the committed files straight to the VPS and builds the Owed image there: no image registry.
+  # Same layout as `console vps:deploy` (linux-workspace): files land in APP_DIR with a
+  # .deploy-manifest, and server-only .env files are never shipped or overwritten.
+  # Secrets (environment "production"): DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_PRIVATE_KEY,
+  # optional DEPLOY_KNOWN_HOSTS (else ssh-keyscan) and DEPLOY_PATH (else APP_DIR below).
+  # App keys (optional, repo or environment secrets): ANTHROPIC_API_KEY, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET,
+  # AG_STUDIO_LICENSE_KEY, OWED_YOUTUBE_ID. scripts/deploy/server-env.sh writes them into the server's .env.
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      APP_DIR: /workspace/edilsonsantos-co-za/owed
+      COMPOSE_FILE: docker-compose.yml
+      REQUIRED_ENV_FILES: ".env"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          missing=()
+          [[ -n "$DEPLOY_HOST" ]] || missing+=(DEPLOY_HOST)
+          [[ -n "$DEPLOY_USER" ]] || missing+=(DEPLOY_USER)
+          [[ -n "$DEPLOY_SSH_PRIVATE_KEY" ]] || missing+=(DEPLOY_SSH_PRIVATE_KEY)
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::Missing deploy secret(s) in the production environment: ${missing[*]}"
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          if [[ -n "$DEPLOY_KNOWN_HOSTS" ]]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            # No pinned host key: trust the first one seen (set DEPLOY_KNOWN_HOSTS to pin it)
+            ssh-keyscan -T 30 "$DEPLOY_HOST" > ~/.ssh/known_hosts 2>/dev/null || true
+          fi
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  BatchMode yes\n  StrictHostKeyChecking accept-new\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' "$DEPLOY_HOST" "$DEPLOY_USER" > ~/.ssh/config
+          ssh vps true || { echo "::error::Cannot SSH to the VPS as $DEPLOY_USER (port 22 reachable from GitHub runners? key authorised?)"; exit 1; }
+          # DEPLOY_PATH is either this app's folder or the workspace root. The folder under the root
+          # comes from APP_DIR, not the repo name, so renaming the repo never moves the app on the
+          # server (a new folder would mean a new compose project with empty volumes).
+          if [[ -n "$DEPLOY_PATH" ]]; then
+            if [[ "$(basename "$DEPLOY_PATH")" == "$(basename "$APP_DIR")" ]]; then
+              APP_DIR="$DEPLOY_PATH"
+            else
+              APP_DIR="${DEPLOY_PATH%/}/${APP_DIR#/workspace/}"
+            fi
+          fi
+          echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+          # Earlier deploys left root-owned files: use passwordless sudo on the server when the user has it
+          if ssh vps 'sudo -n true' 2>/dev/null; then echo "REMOTE_SUDO=sudo -n" >> "$GITHUB_ENV"; else echo "REMOTE_SUDO=" >> "$GITHUB_ENV"; fi
+
+      - name: Ship committed files
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PAYPAL_CLIENT_ID: ${{ secrets.PAYPAL_CLIENT_ID }}
+          PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
+          AG_STUDIO_LICENSE_KEY: ${{ secrets.AG_STUDIO_LICENSE_KEY }}
+          OWED_YOUTUBE_ID: ${{ secrets.OWED_YOUTUBE_ID }}
+        run: |
+          # Everything git tracks except env files (examples excepted): the server keeps its own .env*.
+          # Each part ends in || true: the step runs with bash -e, and a grep that matches nothing would end the list early.
+          { git ls-files | grep -vE '(^|/)\.env' || true ; git ls-files | grep -E '(^|/)\.env[^/]*\.example$' || true ; } | sort -u > .deploy-manifest.new
+          tar -czf - -T .deploy-manifest.new .deploy-manifest.new | ssh vps "set -e; $REMOTE_SUDO mkdir -p '$APP_DIR'; $REMOTE_SUDO tar -xzf - -C '$APP_DIR'"
+          # API keys travel inside the script on stdin (never on a command line), into server-env.sh's environment.
+          { printf 'export %s=%q\n' ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY" PAYPAL_CLIENT_ID "$PAYPAL_CLIENT_ID" PAYPAL_CLIENT_SECRET "$PAYPAL_CLIENT_SECRET" AG_STUDIO_LICENSE_KEY "$AG_STUDIO_LICENSE_KEY" OWED_YOUTUBE_ID "$OWED_YOUTUBE_ID"; cat <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
+          # Files an earlier deploy shipped that are gone in this one
+          if [ -f .deploy-manifest ]; then
+            comm -23 <(sort .deploy-manifest) <(sort .deploy-manifest.new) | while IFS= read -r f; do [ -n "$f" ] && rm -f -- "./$f"; done
+          fi
+          mv .deploy-manifest.new .deploy-manifest
+          echo "$RELEASE $(date -u +%FT%TZ)" > .deploy-release
+          bash scripts/deploy/server-env.sh < /dev/null
+          missing=""
+          for f in $REQUIRED_ENV_FILES; do [ -f "$f" ] || missing="$missing $APP_DIR/$f"; done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing on the server:$missing. Create it from the repo's example env file, then re-run this workflow."
+            exit 1
+          fi
+          REMOTE
+          } | ssh vps "$REMOTE_SUDO env APP_DIR='$APP_DIR' RELEASE='${GITHUB_SHA::12} ${GITHUB_REF_NAME}' REQUIRED_ENV_FILES='$REQUIRED_ENV_FILES' bash -s"
+
+      - name: Build and start on the VPS
+        run: |
+          ssh vps "$REMOTE_SUDO env APP_DIR='$APP_DIR' COMPOSE_FILE='$COMPOSE_FILE' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
+          if ! docker compose -f "$COMPOSE_FILE" up -d --build --remove-orphans --wait --wait-timeout 300; then
+            docker compose -f "$COMPOSE_FILE" ps
+            docker compose -f "$COMPOSE_FILE" logs --tail 80
+            exit 1
+          fi
+          docker compose -f "$COMPOSE_FILE" ps
+          REMOTE
