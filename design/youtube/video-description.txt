@@ -1,0 +1,35 @@
+Owed is an AI collections copilot for freelancers and small studios who bill through PayPal. Claude agents read your invoices, learn how each client really pays, and draft the right reminder. Nothing is sent until you approve it.
+
+My entry for the PayPal AI Hackathon 2026.
+
+▶ Try it: https://owed.edilsonsantos.co.za
+▶ Source code (MIT): https://github.com/edilsonsantos-co-za/owed
+
+Chapters
+0:00 Intro
+0:13 Welcome and walkthrough
+0:25 Four pages, one workflow
+0:34 Your money at a glance
+0:44 Today's focus
+0:53 Aging and cash forecast
+1:02 Client payment profiles
+1:15 Ask Owed: the agent team
+1:26 Approvals: nothing sends without you
+1:38 Activity: the audit trail
+1:46 Customize the dashboard
+1:53 Connect PayPal and Claude
+2:01 How it's built
+2:18 Wrap-up
+
+Built with
+• PayPal Invoicing v2, Transaction Search and the PayPal Agent Toolkit
+• Claude (Anthropic API) for the agents and the morning brief
+• AG Studio and its Agent Framework, with a custom Claude adapter and collections agent
+• Next.js, React, TypeScript, Tailwind CSS
+
+The voice-over and parts of this video were generated with AI tools. The app shown uses demo data.
+
+Built by Edilson Santos, backend developer, Johannesburg.
+Portfolio: https://edilsonsantos.co.za
+
+#PayPal #AI #Claude #AGGrid #Freelancing #Hackathon
