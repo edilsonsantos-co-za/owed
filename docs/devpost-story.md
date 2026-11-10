@@ -16,7 +16,7 @@ That became **Owed**: an AI collections copilot for freelancers and small studio
 - **Audit trail.** Activity records every draft, approval and PayPal call, and who did it: you, an agent, or the system.
 - **First-visit walkthrough.** It opens each page in turn and spotlights what it explains.
 
-## How I built it
+## How we built it
 
 | Layer | What I used |
 | --- | --- |
@@ -60,7 +60,7 @@ $$
 
 with confidence falling as risk rises. The **tone** of each reminder follows the worst overdue invoice: *final* beyond 45 days, *firm* beyond 20 days (or for high-risk clients), otherwise *friendly*. The agent explains its choice in plain words on every draft.
 
-## Challenges
+## Challenges we ran into
 
 - **Making agents useful but harmless.** Getting the built-in AG Studio lead agent to hand collections work to my custom agent, while making sure no agent could ever reach a "send" path, took several iterations of the tool design.
 - **A custom Claude adapter for AG Studio.** The Agent Framework expects its own model interface, so I wrote an adapter that maps its messages and tool calls onto Claude's tool use, including streaming.
@@ -69,14 +69,24 @@ with confidence falling as risk rises. The **tone** of each reminder follows the
 - **Design.** I rebuilt the visual language several times, from a generic SaaS look to "paper and ink" invoice slips, rubber stamps and perforated receipts, so the product feels like the thing it manages.
 - **The demo video.** It is recorded by a script: Playwright drives the real app through the walkthrough while a local neural voice reads each line, and ffmpeg stitches the shots. Keeping the voice and the screen in step, with no silent gaps, took more care than expected.
 
-## What I learned
+## Accomplishments that we're proud of
+
+- **A complete product, not a proof of concept:** sign-in, dashboard, client profiles, agent chat, approval queue, audit trail, an admin page and a guided first-visit walkthrough, all live at [owed.edilsonsantos.co.za](https://owed.edilsonsantos.co.za).
+- **Safety by construction.** Agents can draft but never send; the approval button is the only path to PayPal's send and remind endpoints.
+- **Agents that work as a team.** My custom collections agent plugs into AG Studio's own agents through a Claude adapter I wrote for the Agent Framework, so the built-in lead can hand it work.
+- **Works out of the box.** A realistic demo scenario (seven clients, each with their own payment habits) means anyone can try Owed in a minute, with no keys.
+- **A design language that fits the job:** invoice slips, rubber stamps and perforated receipts, in a paper-and-ink palette.
+- **A reproducible demo video,** recorded by script from the real app, so it can be re-shot whenever the product changes.
+- **Open source** under the MIT licence.
+
+## What we learned
 
 - **Human-in-the-loop is a product feature, not a disclaimer.** Freelancers trust Owed *because* it cannot act alone, and showing the agent's reasoning on every draft builds that trust.
 - **Small, explainable models beat clever ones.** A transparent lateness average, which a user can check against their own memory, is more convincing than a black-box prediction.
 - **Agent frameworks shine when agents specialise.** A narrow collections agent with three or four tools behaved far better than one big agent with everything.
 - **The PayPal Agent Toolkit** made the read-only investigation agent almost trivial; the work was in choosing *which* tools to expose.
 
-## What's next
+## What's next for Owed
 
 - Scheduled reminders using PayPal's reminder settings, so approved cadences run themselves.
 - Dispute awareness: pause chasing when a client opens a dispute.
