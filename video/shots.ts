@@ -10,11 +10,11 @@ export interface Shot {
   run: (page: Page, ctx: { baseUrl: string }) => Promise<void>;
 }
 
-const card = (title: string, subtitle: string, foot = '') => `<!doctype html><html><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0b1f33;color:#fff;font-family:Inter,Helvetica,Arial,sans-serif">
+const card = (title: string, subtitle: string, foot = '') => `<!doctype html><html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;800&display=swap"></head><body style="margin:0;height:100vh;display:grid;place-items:center;background:radial-gradient(120% 70% at 0% 0%,rgba(61,220,151,.16),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(90,63,224,.2),transparent 60%),#10201a;color:#f4f1ea;font-family:'Plus Jakarta Sans',Helvetica,Arial,sans-serif">
 <div style="text-align:center;max-width:1300px;padding:0 60px">
-<div style="font-size:120px;font-weight:800;letter-spacing:-4px">${title}</div>
-<div style="font-size:40px;color:#c8d6e5;margin-top:18px;line-height:1.35">${subtitle}</div>
-<div style="font-size:26px;color:#8aa4c0;margin-top:48px">${foot}</div></div></body></html>`;
+<div style="font-size:120px;font-weight:800;letter-spacing:-5px">${title}</div>
+<div style="font-size:40px;color:rgba(244,241,234,.78);margin-top:18px;line-height:1.35">${subtitle}</div>
+<div style="font-size:26px;color:#3ddc97;margin-top:48px">${foot}</div></div></body></html>`;
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const pause = (ms: number) => sleep(ms);
@@ -52,7 +52,7 @@ export const SHOTS: Shot[] = [
     narration:
       'Owed reads every invoice in your PayPal account and turns it into a live receivables dashboard: what is outstanding, what is overdue, how old it is, and when the cash will realistically land, based on how each client actually pays.',
     run: async (page, { baseUrl }) => {
-      await page.goto(baseUrl);
+      await page.goto(`${baseUrl}/app`);
       await page.getByText('Open invoices, most overdue first').waitFor({ timeout: 60_000 });
       await pause(2500);
       await page.mouse.move(700, 420, { steps: 25 });

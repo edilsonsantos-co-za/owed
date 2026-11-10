@@ -98,7 +98,7 @@ export default function SideNav({
         </p>
       </div>
 
-      <nav className="relative flex flex-col gap-0.5 px-3" aria-label="Main">
+      <nav data-tour="nav" className="relative flex flex-col gap-0.5 px-3" aria-label="Main">
         {(Object.keys(NAV) as View[]).map((id) => (
           <Item
             key={id}
@@ -131,6 +131,7 @@ export default function SideNav({
         <button
           onClick={onSetup}
           disabled={!onSetup}
+          data-tour="connections"
           className="block w-full rounded-3xl px-4 py-3 text-left text-xs enabled:hover:bg-white/[0.05]"
           title="See what to connect and how"
         >

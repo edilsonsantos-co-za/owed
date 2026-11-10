@@ -59,11 +59,17 @@ async function voice() {
 
 async function record() {
   mkdirSync(OUT, { recursive: true });
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.VIDEO_CHROME || undefined });
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 },
     deviceScaleFactor: 1,
     recordVideo: { dir: OUT, size: { width: 1920, height: 1080 } },
+  });
+  // The walkthrough has its own shot; keep it from covering the others.
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem('owed.tour.v2', '1');
+    } catch {}
   });
   const page = await context.newPage();
   const started = Date.now();

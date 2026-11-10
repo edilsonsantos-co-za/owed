@@ -6,18 +6,21 @@ import {
   BarChart3,
   CheckCircle2,
   Circle,
+  History,
   Inbox,
   LayoutDashboard,
   PanelsTopLeft,
   PlugZap,
   Sparkles,
+  Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, Logo, cx } from './ui';
 
-export type TourTarget = 'overview' | 'clients' | 'approvals' | 'activity' | 'customize' | 'ask';
+export type TourView = 'overview' | 'clients' | 'approvals' | 'activity';
+export type TourTarget = TourView | 'customize' | 'ask';
 
 export interface Setup {
   paypal: boolean;
@@ -30,7 +33,8 @@ interface Step {
   tone: string;
   title: string;
   body: ReactNode;
-  show?: { label: string; target: TourTarget };
+  view?: TourView;
+  anchor?: string;
 }
 
 const loop = [
@@ -57,23 +61,23 @@ function Bullets({ items }: { items: ReactNode[] }) {
 }
 
 const Prompt = ({ children }: { children: string }) => (
-  <span className="block rounded-lg border border-ai/15 bg-ai-soft/60 px-3 py-2 text-[13px] text-ink">“{children}”</span>
+  <span className="block rounded-full bg-ai-soft/70 px-4 py-2 text-[13px] text-ink">“{children}”</span>
 );
 
 const STEPS: Step[] = [
   {
     icon: Sparkles,
     tone: 'bg-ai-soft text-ai',
-    title: 'Owed gets your invoices paid',
+    title: 'Welcome to Owed',
     body: (
       <>
         <p className="text-sm leading-relaxed text-ink-2">
           Owed reads the invoices you send through PayPal, works out who is late and who is about to be, and drafts the reminders for you. You stay in charge:
-          every message waits for your approval.
+          every message waits for your approval. This walkthrough opens each page in turn, about a minute end to end.
         </p>
         <div className="mt-5 grid grid-cols-3 gap-2">
           {loop.map((s, i) => (
-            <div key={s.label} className="relative rounded-xl border border-line p-3 text-center">
+            <div key={s.label} className="relative rounded-[22px] bg-sunken/70 p-3 text-center">
               <s.icon className="mx-auto size-5 text-ink-2" />
               <p className="mt-2 text-[13px] font-semibold text-ink">{s.label}</p>
               <p className="mt-0.5 text-xs text-muted">{s.note}</p>
@@ -87,84 +91,136 @@ const STEPS: Step[] = [
   {
     icon: LayoutDashboard,
     tone: 'bg-sunken text-ink',
-    title: 'See what you are owed',
+    title: 'Four pages, one workflow',
+    view: 'overview',
+    anchor: 'nav',
     body: (
       <Bullets
         items={[
           <>
-            <b className="text-ink">Overview</b> shows what is outstanding, what is overdue, and the cash expected in the next 14 days.
+            <b className="text-ink">Overview</b>: what you are owed and what to do today.
           </>,
           <>
-            <b className="text-ink">Today&apos;s focus</b> names the clients to chase first and how firmly.
+            <b className="text-ink">Clients</b>: how each client really pays.
           </>,
           <>
-            <b className="text-ink">Aging</b> and <b className="text-ink">Cash forecast</b> chart how late money is and when it should land, based on each
-            client&apos;s real payment habits.
+            <b className="text-ink">Approvals</b>: drafts waiting for your yes.
           </>,
           <>
-            <b className="text-ink">Clients</b> ranks everyone by payment risk and days to pay.
+            <b className="text-ink">Activity</b>: everything that happened, and who did it.
           </>,
         ]}
       />
     ),
-    show: { label: 'Open Overview', target: 'overview' },
+  },
+  {
+    icon: LayoutDashboard,
+    tone: 'bg-sunken text-ink',
+    title: 'Your money at a glance',
+    view: 'overview',
+    anchor: 'kpis',
+    body: (
+      <p className="text-sm leading-relaxed text-ink-2">
+        <b className="text-ink">Outstanding</b> is every unpaid invoice. <b className="text-ink">Overdue</b> is the part past its due date.{' '}
+        <b className="text-ink">Expected next 14 days</b> is the cash that should land soon, judged by each client&apos;s real habits, not the due date.
+      </p>
+    ),
+  },
+  {
+    icon: Sparkles,
+    tone: 'bg-ai-soft text-ai',
+    title: "Today's focus",
+    view: 'overview',
+    anchor: 'focus',
+    body: (
+      <p className="text-sm leading-relaxed text-ink-2">
+        Each morning Owed names the clients to chase first and how firmly: <b className="text-ink">friendly</b>, <b className="text-ink">firm</b> or{' '}
+        <b className="text-ink">final</b>. With the Claude agents on, an agent checks PayPal and writes this brief for you.
+      </p>
+    ),
+  },
+  {
+    icon: BarChart3,
+    tone: 'bg-sunken text-ink',
+    title: 'How late, and when it lands',
+    view: 'overview',
+    anchor: 'studio',
+    body: (
+      <p className="text-sm leading-relaxed text-ink-2">
+        <b className="text-ink">Aging</b> groups what is owed by how late it is. <b className="text-ink">Cash forecast</b> shows the weeks the money should
+        arrive, shifted by how late each client usually pays. Below them, every open invoice, most overdue first.
+      </p>
+    ),
+  },
+  {
+    icon: Users,
+    tone: 'bg-sunken text-ink',
+    title: 'Clients: who pays, and how',
+    view: 'clients',
+    anchor: 'studio',
+    body: (
+      <p className="text-sm leading-relaxed text-ink-2">
+        Every client gets a profile from their history: average days late, on-time rate and risk. A client who always pays seven weeks late gets a different
+        reminder from one who slipped once.
+      </p>
+    ),
   },
   {
     icon: Sparkles,
     tone: 'bg-ai-soft text-ai',
     title: 'Ask Owed to do the chasing',
+    view: 'overview',
+    anchor: 'ask',
     body: (
       <>
         <p className="text-sm leading-relaxed text-ink-2">
-          <b className="text-ink">Ask Owed</b> opens a chat with the agents next to your dashboard. They check PayPal before they answer, and anything they
-          write lands in Approvals as a draft. Try:
+          <b className="text-ink">Ask Owed</b> opens a chat with the agents beside your dashboard. Anything they write lands in Approvals as a draft. Try:
         </p>
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-2">
           <Prompt>Chase everyone more than 30 days late</Prompt>
-          <Prompt>Invoice Fernhill Yoga for this month&apos;s social content pack, same as last time</Prompt>
           <Prompt>Add a chart of overdue amounts by client</Prompt>
         </div>
       </>
     ),
-    show: { label: 'Open Ask Owed', target: 'ask' },
   },
   {
     icon: Inbox,
     tone: 'bg-good-soft text-good',
-    title: 'Approve before anything is sent',
+    title: 'Approvals: nothing sends without you',
+    view: 'approvals',
+    anchor: 'page',
     body: (
-      <Bullets
-        items={[
-          <>
-            <b className="text-ink">Approvals</b> lists every draft, most overdue first, with the agent&apos;s reason for it.
-          </>,
-          'Edit the subject and message, then approve. Owed sends it through PayPal Invoicing, so the client gets a real PayPal reminder or invoice with a pay button.',
-          'Discard anything you do not like. Agents never send on their own.',
-          <>
-            <b className="text-ink">Activity</b> records who did what: you, an agent, or a PayPal call.
-          </>,
-        ]}
-      />
+      <p className="text-sm leading-relaxed text-ink-2">
+        Every draft waits here with its tone and the agent&apos;s reason. Edit the subject or message, then <b className="text-ink">Approve &amp; send</b>:
+        Owed sends a real PayPal reminder with a pay button. Or discard it. Agents can never send on their own.
+      </p>
     ),
-    show: { label: 'Open Approvals', target: 'approvals' },
+  },
+  {
+    icon: History,
+    tone: 'bg-sunken text-ink',
+    title: 'Activity: the audit trail',
+    view: 'activity',
+    anchor: 'page',
+    body: (
+      <p className="text-sm leading-relaxed text-ink-2">
+        Every draft, approval, send and PayPal call is logged with who did it: you, an agent, or Owed itself. If a client asks &quot;when did you remind
+        me?&quot;, the answer is here.
+      </p>
+    ),
   },
   {
     icon: PanelsTopLeft,
     tone: 'bg-warn-soft text-warn',
     title: 'Make the dashboard yours',
+    view: 'overview',
+    anchor: 'customize',
     body: (
-      <Bullets
-        items={[
-          <>
-            <b className="text-ink">Customize</b> opens the dashboard full screen in an editor.
-          </>,
-          'Move and resize charts, change chart types, or drag new fields in to build a chart.',
-          'Undo anything, Save when you are happy, or Reset to default at any time.',
-          'Saved layouts stay in this browser.',
-        ]}
-      />
+      <p className="text-sm leading-relaxed text-ink-2">
+        <b className="text-ink">Customize</b> opens the dashboard full screen: move and resize charts, change chart types, drag in new fields. Undo anything,
+        save when you are happy, or reset to the default.
+      </p>
     ),
-    show: { label: 'Try Customize', target: 'customize' },
   },
 ];
 
@@ -198,7 +254,7 @@ function SetupStep({ setup }: { setup: Setup }) {
         Owed works on demo data out of the box. Add these to <code className="rounded bg-sunken px-1 text-[13px]">.env.local</code> and restart the server
         to switch each one on.
       </p>
-      <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+      <ul className="mt-4 divide-y divide-line rounded-[22px] bg-sunken/60">
         {rows.map((r) => (
           <li key={r.name} className="flex gap-3 p-3">
             {r.done ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-good" /> : <Circle className="mt-0.5 size-5 shrink-0 text-faint" />}
@@ -216,7 +272,7 @@ function SetupStep({ setup }: { setup: Setup }) {
   );
 }
 
-const SEEN = 'owed.tour.v1';
+const SEEN = 'owed.tour.v2';
 
 export function tourSeen() {
   try {
@@ -226,22 +282,27 @@ export function tourSeen() {
   }
 }
 
+type Box = { top: number; left: number; width: number; height: number };
+
 export default function WelcomeTour({
   open,
   initialStep = 0,
   setup,
   onClose,
-  onShow,
+  onView,
 }: {
   open: boolean;
   initialStep?: number;
   setup: Setup;
   onClose: () => void;
-  onShow: (target: TourTarget) => void;
+  onView: (view: TourView) => void;
 }) {
   const [step, setStep] = useState(initialStep);
+  const [box, setBox] = useState<Box | null>(null);
   const total = STEPS.length + 1;
   const last = step === total - 1;
+  const current: Step | undefined = STEPS[step];
+  const anchor = current ? current.anchor : 'connections';
 
   const close = () => {
     try {
@@ -249,6 +310,41 @@ export default function WelcomeTour({
     } catch {}
     onClose();
   };
+
+  // Each step opens its page, then spotlights the part it explains.
+  useEffect(() => {
+    if (!open) return;
+    if (current?.view) onView(current.view);
+    if (!anchor) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBox(null);
+      return;
+    }
+    let raf = 0;
+    const measure = () => {
+      const el = document.querySelector<HTMLElement>(`[data-tour="${anchor}"]`);
+      const r = el?.getBoundingClientRect();
+      setBox(r && r.width > 0 ? { top: r.top - 8, left: r.left - 8, width: r.width + 16, height: Math.min(r.height + 16, window.innerHeight - r.top) } : null);
+    };
+    const settle = window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-tour="${anchor}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      measure();
+      window.setTimeout(measure, 450);
+    }, 260);
+    const onMove = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    window.addEventListener('resize', onMove);
+    window.addEventListener('scroll', onMove, true);
+    return () => {
+      window.clearTimeout(settle);
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onMove);
+      window.removeEventListener('scroll', onMove, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, step]);
 
   useEffect(() => {
     if (!open) return;
@@ -262,40 +358,55 @@ export default function WelcomeTour({
   });
 
   if (!open) return null;
-  const current = STEPS[step];
-  const Icon = current?.icon ?? BarChart3;
+  const Icon = current?.icon ?? PlugZap;
+  const spot = anchor ? box : null;
 
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-ink/40 p-4 backdrop-blur-[2px]" onClick={close}>
+    <div className="fixed inset-0 z-[60]">
+      {spot ? (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed rounded-[26px] ring-2 ring-mint transition-all duration-300 ease-out"
+          style={{ ...spot, boxShadow: '0 0 0 9999px rgb(16 32 26 / 0.55)' }}
+        />
+      ) : (
+        <div aria-hidden className="fixed inset-0 bg-ink/45 backdrop-blur-[2px]" />
+      )}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="tour-title"
-        onClick={(e) => e.stopPropagation()}
-        className="toast-in flex max-h-[calc(100dvh-2rem)] w-full max-w-[540px] flex-col overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-pop)]"
+        className={cx(
+          'toast-in fixed flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-[28px] bg-surface shadow-[var(--shadow-pop)]',
+          spot
+            ? 'inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[420px]'
+            : 'left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-[540px] -translate-x-1/2 -translate-y-1/2',
+        )}
       >
-        <div className="flex items-center gap-2 border-b border-line px-5 py-3">
+        <div className="flex items-center gap-2 px-6 pt-5">
           <Logo size={22} />
           <span className="text-[13px] font-semibold text-ink">How Owed works</span>
-          <span className="ml-auto text-xs text-muted">
+          <span className="ml-auto text-xs font-medium text-muted">
             {step + 1} of {total}
           </span>
-          <button onClick={close} aria-label="Close" className="rounded-md p-1 text-muted hover:bg-sunken hover:text-ink">
+          <button onClick={close} aria-label="Close the walkthrough" className="rounded-full p-1.5 text-muted hover:bg-sunken hover:text-ink">
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto px-6 py-6 max-sm:flex-1 sm:h-[470px]">
-          <span className={cx('grid size-11 place-items-center rounded-xl', current?.tone ?? 'bg-sunken text-ink-2')}>
-            {current ? <Icon className="size-5" /> : <PlugZap className="size-5" />}
-          </span>
-          <h2 id="tour-title" className="mt-4 text-xl font-semibold tracking-tight text-ink">
-            {current?.title ?? 'Connect your accounts'}
-          </h2>
-          <div className="mt-2">{current ? current.body : <SetupStep setup={setup} />}</div>
+        <div className="min-h-0 overflow-y-auto px-6 pb-5 pt-4">
+          <div className="flex items-center gap-3">
+            <span className={cx('grid size-10 shrink-0 place-items-center rounded-full', current?.tone ?? 'bg-sunken text-ink-2')}>
+              <Icon className="size-5" />
+            </span>
+            <h2 id="tour-title" className="serif text-[22px] leading-tight text-ink">
+              {current?.title ?? 'Connect your accounts'}
+            </h2>
+          </div>
+          <div className="mt-3">{current ? current.body : <SetupStep setup={setup} />}</div>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-line bg-canvas/60 px-5 py-3">
+        <div className="flex items-center gap-2 px-6 pb-5">
           <div className="flex gap-1.5" aria-hidden>
             {Array.from({ length: total }, (_, i) => (
               <button
@@ -307,26 +418,18 @@ export default function WelcomeTour({
             ))}
           </div>
           <div className="ml-auto flex gap-2">
-            {current?.show && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  close();
-                  onShow(current.show!.target);
-                }}
-              >
-                {current.show.label}
+            {step === 0 ? (
+              <Button variant="ghost" size="sm" onClick={close}>
+                Skip
               </Button>
-            )}
-            {step > 0 && (
+            ) : (
               <Button size="sm" onClick={() => setStep(step - 1)}>
                 <ArrowLeft className="size-4" />
                 Back
               </Button>
             )}
             <Button variant="primary" size="sm" onClick={() => (last ? close() : setStep(step + 1))}>
-              {last ? 'Start using Owed' : 'Next'}
+              {step === 0 ? 'Show me around' : last ? 'Start using Owed' : 'Next'}
               {!last && <ArrowRight className="size-4" />}
             </Button>
           </div>

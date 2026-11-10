@@ -17,7 +17,7 @@ import MorningBrief from './morning-brief';
 import type { StudioSurface } from './studio-dashboard';
 import { Badge, Button, Logo, cx } from './ui';
 import SideNav, { type View } from './side-nav';
-import WelcomeTour, { SETUP_STEP, tourSeen, type TourTarget } from './welcome-tour';
+import WelcomeTour, { SETUP_STEP, tourSeen } from './welcome-tour';
 
 // AG Studio measures the DOM, so it renders in the browser only.
 const StudioDashboard = dynamic(() => import('./studio-dashboard'), {
@@ -217,15 +217,6 @@ export default function OwedApp({
     }));
   }, []);
 
-  const showFromTour = useCallback(
-    (target: TourTarget) => {
-      if (target === 'customize') return startEditing();
-      if (target === 'ask') return aiEnabled ? openCopilot() : setTour({ open: true, step: SETUP_STEP });
-      go(target);
-    },
-    [aiEnabled, go, openCopilot, startEditing],
-  );
-
   const ledger = snapshot?.ledger;
   const pending = snapshot?.drafts.filter((d) => d.status === 'pending').length ?? 0;
   const live = ledger?.mode === 'live';
@@ -275,7 +266,7 @@ export default function OwedApp({
               <CircleHelp className="size-4" />
             </Button>
             {studioVisible && (
-              <Button size="sm" onClick={startEditing} title="Edit this dashboard full screen">
+              <Button size="sm" onClick={startEditing} title="Edit this dashboard full screen" data-tour="customize">
                 <PanelsTopLeft className="size-4" />
                 Customize
               </Button>
@@ -285,6 +276,7 @@ export default function OwedApp({
               size="sm"
               onClick={() => (surface === 'copilot' && studioVisible ? setSurface('view') : openCopilot())}
               disabled={!aiEnabled}
+              data-tour="ask"
               title={aiEnabled ? 'Chat with the Owed agents' : 'Set ANTHROPIC_API_KEY to enable the agents'}
             >
               <Sparkles className="size-4" />
@@ -311,14 +303,18 @@ export default function OwedApp({
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-8">
+          <div data-tour="page" className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-8">
             {error && <div className="rounded-lg border border-bad/20 bg-bad-soft px-4 py-3 text-sm text-bad">Could not load PayPal data: {error}</div>}
 
             {view === 'overview' &&
               (ledger ? (
                 <>
-                  <KpiStrip ledger={ledger} />
-                  <MorningBrief key={ledger.asOf} ledger={ledger} enabled={briefEnabled} onAsk={aiEnabled ? openCopilot : undefined} />
+                  <div data-tour="kpis">
+                    <KpiStrip ledger={ledger} />
+                  </div>
+                  <div data-tour="focus">
+                    <MorningBrief key={ledger.asOf} ledger={ledger} enabled={briefEnabled} onAsk={aiEnabled ? openCopilot : undefined} />
+                  </div>
                 </>
               ) : (
                 <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
@@ -330,6 +326,7 @@ export default function OwedApp({
 
             <section
               ref={studioRef}
+              data-tour="studio"
               className={cx(
                 surface === 'customize' ? 'fixed inset-0 z-50 flex flex-col bg-canvas' : 'scroll-mt-4 overflow-hidden rounded-xl',
                 !studioVisible && 'hidden',
@@ -402,7 +399,10 @@ export default function OwedApp({
         initialStep={tour.step}
         setup={{ paypal: live, claude: aiEnabled, studio: !!licenseKey }}
         onClose={() => setTour((t) => ({ ...t, open: false }))}
-        onShow={showFromTour}
+        onView={(v) => {
+          setSurface('view');
+          go(v);
+        }}
       />
 
       {toast && (
