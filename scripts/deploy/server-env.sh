@@ -32,6 +32,10 @@ fi
 chmod 600 "$ENV_FILE"
 
 ensure OWED_BASE_URL "$SITE_URL"
+# .env.example carries the local dev address: never let it reach production (sign-in would return to localhost)
+if get_env "$ENV_FILE" OWED_BASE_URL | grep -qE '^https?://(localhost|127\.0\.0\.1)'; then
+  set_env OWED_BASE_URL "$SITE_URL"; echo "  set OWED_BASE_URL"
+fi
 ensure PAYPAL_API_BASE https://api-m.sandbox.paypal.com
 ensure OWED_BUSINESS_NAME "Owed Studio"
 ensure SESSION_SECRET "$(openssl rand -base64 48 | tr -d '\n')"
