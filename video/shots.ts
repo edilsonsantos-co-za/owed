@@ -48,6 +48,24 @@ export const SHOTS: Shot[] = [
     },
   },
   {
+    id: 'tour',
+    narration:
+      'The first time you sign in, Owed walks you through it page by page: what you are owed, who to chase today, how each client really pays, and where drafts wait for your approval.',
+    run: async (page, { baseUrl }) => {
+      await page.goto(`${baseUrl}/app`);
+      await page.getByText('Open invoices, most overdue first').waitFor({ timeout: 60_000 });
+      await page.getByRole('button', { name: 'How Owed works' }).first().click();
+      await pause(2200);
+      const dialog = page.getByRole('dialog');
+      for (const name of [/Show me around/, /Next/, /Next/, /Next/, /Next/, /Next/]) {
+        await dialog.getByRole('button', { name }).click();
+        await pause(1900);
+      }
+      await page.keyboard.press('Escape');
+      await pause(600);
+    },
+  },
+  {
     id: 'dashboard',
     narration:
       'Owed reads every invoice in your PayPal account and turns it into a live receivables dashboard: what is outstanding, what is overdue, how old it is, and when the cash will realistically land, based on how each client actually pays.',
