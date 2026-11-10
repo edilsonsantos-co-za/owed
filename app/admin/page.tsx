@@ -54,13 +54,13 @@ async function SignUps() {
             <p className="mt-1 hidden text-[13px] text-muted sm:block">Everyone who has signed in to Owed through the DataSparkLab SSO.</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <a href="/app" className="rounded-[10px] px-3 py-2 text-sm text-ink-2 hover:bg-sunken lg:hidden">
+            <a href="/app" className="rounded-full px-3 py-2 text-sm text-ink-2 hover:bg-sunken lg:hidden">
               Dashboard
             </a>
             <a
               href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}
               download="owed-sign-ups.csv"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[10px] border border-line-strong bg-surface px-3.5 text-sm font-medium hover:bg-sunken"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 text-sm font-medium hover:bg-sunken"
             >
               <Download className="size-4" /> Export CSV
             </a>

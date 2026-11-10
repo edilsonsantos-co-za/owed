@@ -38,13 +38,12 @@ function Item({
   badge?: number;
 }) {
   const cls = cx(
-    'group relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors',
+    'group relative flex h-10 items-center gap-3 rounded-full px-4 text-sm transition-colors',
     active ? 'bg-white/[0.08] font-medium text-white' : 'text-white/60 hover:bg-white/[0.04] hover:text-white',
   );
   const body = (
     <>
-      {active && <span className="absolute inset-y-2.5 -left-3 w-[3px] rounded-r-full bg-mint" />}
-      <Icon className={cx('size-[18px]', active ? 'text-mint' : 'text-white/40 group-hover:text-white/75')} strokeWidth={1.75} />
+            <Icon className={cx('size-[18px]', active ? 'text-mint' : 'text-white/40 group-hover:text-white/75')} strokeWidth={1.75} />
       {label}
       {!!badge && <span className="ml-auto rounded-full bg-ai px-2 font-mono text-[11px] font-semibold leading-5 text-white">{badge}</span>}
     </>
@@ -90,7 +89,7 @@ export default function SideNav({
         </Link>
       </div>
 
-      <div className="relative mx-3 mb-5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
+      <div className="relative mx-3 mb-5 px-4">
         <p className="eyebrow text-[10px] text-white/40">Workspace</p>
         <p className="mt-1 truncate text-[14px] font-medium">{business ?? 'Owed Studio'}</p>
         <p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/55">
@@ -123,7 +122,7 @@ export default function SideNav({
         {onTour && (
           <button
             onClick={onTour}
-            className="flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm text-white/60 hover:bg-white/[0.04] hover:text-white"
+            className="flex h-10 w-full items-center gap-3 rounded-full px-4 text-sm text-white/60 hover:bg-white/[0.04] hover:text-white"
           >
             <CircleHelp className="size-[18px] text-white/40" strokeWidth={1.75} />
             How Owed works
@@ -132,7 +131,7 @@ export default function SideNav({
         <button
           onClick={onSetup}
           disabled={!onSetup}
-          className="block w-full rounded-xl border border-white/10 bg-white/[0.03] p-3.5 text-left text-xs enabled:hover:border-white/20 enabled:hover:bg-white/[0.06]"
+          className="block w-full rounded-3xl px-4 py-3 text-left text-xs enabled:hover:bg-white/[0.05]"
           title="See what to connect and how"
         >
           <p className="mb-2.5 flex items-center">

@@ -16,10 +16,10 @@ export default function NotFound() {
           <h1 className="serif mt-6 text-5xl leading-none">Nothing owed here.</h1>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-2">This page doesn&apos;t exist, or your account can&apos;t open it.</p>
           <div className="mt-8 flex gap-2">
-            <a href="/app" className="inline-flex h-10 items-center rounded-[10px] bg-forest px-4 text-sm font-medium text-white hover:bg-brand-hover">
+            <a href="/app" className="inline-flex h-10 items-center rounded-full bg-forest px-4 text-sm font-medium text-white hover:bg-brand-hover">
               Open the dashboard
             </a>
-            <Link href="/" className="inline-flex h-10 items-center rounded-[10px] border border-line-strong px-4 text-sm font-medium hover:bg-sunken">
+            <Link href="/" className="inline-flex h-10 items-center rounded-full border border-line-strong px-4 text-sm font-medium hover:bg-sunken">
               Home
             </Link>
           </div>

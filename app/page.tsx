@@ -176,7 +176,7 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
           <p className="eyebrow inline-flex items-center gap-2 text-ai">
             <span className="size-1.5 rounded-full bg-ai" /> PayPal AI Hackathon 2026 · Entry
           </p>
-          <h1 className="serif mt-6 text-[clamp(52px,7.4vw,100px)] leading-[0.92]">
+          <h1 className="serif mt-6 text-[clamp(44px,5.6vw,80px)] leading-[0.98]">
             Get paid for the work <em className="text-good">you already did.</em>
           </h1>
           <p className="mt-7 max-w-[34rem] text-[17px] leading-relaxed text-ink-2">

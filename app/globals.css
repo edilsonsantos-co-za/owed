@@ -3,9 +3,9 @@
 /* Owed design tokens. Neutral ink UI (buttons, text), emerald for money that has landed,
    amber/rose for money that is late, violet for anything an agent did. */
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 
   /* Ledger: warm paper, forest ink, money green, terracotta for late, violet for agents */
   --color-canvas: #f4f1ea;
@@ -42,18 +42,24 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
+  font-variant-numeric: tabular-nums;
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-/* Editorial serif for headlines and big numbers */
+/* Display: heavy, tight Plus Jakarta Sans for headlines and big numbers */
 .serif {
   font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+}
+.serif em,
+.serif i,
+.serif .italic,
+.serif.italic {
+  font-style: normal;
 }
 
 /* Perforated bottom edge, like a torn-off invoice or receipt */
@@ -79,17 +85,16 @@ body {
   opacity: 0.9;
 }
 
-/* Hairline grid used on dark ink panels */
+/* Soft light on dark ink panels (no grid) */
 .ledger-grid {
-  background-image: linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-image: radial-gradient(120% 60% at 0% 0%, rgb(61 220 151 / 0.10), transparent 60%), radial-gradient(90% 50% at 100% 100%, rgb(90 63 224 / 0.12), transparent 60%);
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 

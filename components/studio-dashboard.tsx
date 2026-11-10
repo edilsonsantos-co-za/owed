@@ -36,7 +36,7 @@ if (typeof window !== 'undefined') {
 // Matches the tokens in app/globals.css so Studio reads as part of the app, not an embed.
 const INK = '#10201a';
 const theme = studioTheme.withParams({
-  fontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif',
+  fontFamily: 'var(--font-jakarta), ui-sans-serif, system-ui, sans-serif',
   accentColor: '#5a3fe0',
   backgroundColor: '#fffdf8',
   foregroundColor: INK,
@@ -74,7 +74,7 @@ const theme = studioTheme.withParams({
   gridWrapperBorder: 'none',
   gridColumnBorder: 'none',
   gridRowBorder: '1px solid #efe9dd',
-  chartFontFamily: 'var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif',
+  chartFontFamily: 'var(--font-jakarta), ui-sans-serif, system-ui, sans-serif',
   chartGridLineColor: '#ece6da',
   chartAxisLineColor: '#d9d1c1',
   chartSubtleTextColor: '#6b776f',
