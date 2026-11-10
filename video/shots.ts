@@ -3,6 +3,8 @@
 // every other shot holds its last frame until the narration ends. Target length: under 2:50.
 // The product tour is the app's own first-visit walkthrough: one shot per step, so a guide is on screen
 // and a line is spoken the whole way through.
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import type { Page } from 'playwright';
 
 export interface Shot {
@@ -20,7 +22,53 @@ const card = (title: string, subtitle: string, foot = '') => `<!doctype html><ht
 <div style="text-align:center;max-width:1300px;padding:0 60px">
 <div style="font-size:120px;font-weight:800;letter-spacing:-5px">${title}</div>
 <div style="font-size:40px;color:rgba(244,241,234,.78);margin-top:18px;line-height:1.35">${subtitle}</div>
-<div style="font-size:26px;color:#3ddc97;margin-top:48px">${foot}</div></div></body></html>`;
+<div style="font-size:26px;color:#3ddc97;margin-top:48px">${foot}</div>
+<div style="font-size:20px;color:rgba(217,208,255,.8);margin-top:56px">✦ Made with AI · voice-over and video generated with AI tools</div></div></body></html>`;
+
+
+const asset = (file: string, type: string) =>
+  `data:${type};base64,${readFileSync(path.join(process.cwd(), file)).toString('base64')}`;
+
+const AI_NOTE = 'Made with AI · voice-over and video generated with AI tools';
+
+/** Opening card: the product on the left, who built it on a receipt slip on the right, and an AI disclosure. */
+const intro = () => `<!doctype html><html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"><style>
+*{box-sizing:border-box}body{margin:0;height:100vh;font-family:'Plus Jakarta Sans',Helvetica,Arial,sans-serif;color:#f4f1ea;
+background:radial-gradient(110% 70% at 0% 0%,rgba(61,220,151,.16),transparent 60%),radial-gradient(90% 60% at 100% 100%,rgba(90,63,224,.22),transparent 60%),#10201a;display:flex;flex-direction:column}
+.ai{align-self:center;margin-top:44px;display:inline-flex;align-items:center;gap:12px;padding:12px 26px;border-radius:999px;background:rgba(90,63,224,.22);border:1px solid rgba(184,168,255,.45);color:#d9d0ff;font-size:22px;font-weight:600}
+.wrap{flex:1;display:grid;grid-template-columns:1.15fr .85fr;gap:90px;align-items:center;padding:0 140px 60px}
+.brand{display:flex;align-items:center;gap:26px}.brand img{width:120px;height:120px}.brand b{font-size:132px;font-weight:800;letter-spacing:-6px;line-height:1}
+.tag{margin-top:34px;font-size:44px;line-height:1.22;font-weight:700;letter-spacing:-1.2px;max-width:900px}.tag em{font-style:normal;color:#3ddc97}
+.chips{margin-top:36px;display:flex;flex-wrap:wrap;gap:12px}.chips span{padding:10px 20px;border-radius:999px;background:rgba(244,241,234,.08);color:rgba(244,241,234,.82);font-size:21px;font-weight:500}
+.hk{margin-top:30px;color:#3ddc97;font-size:21px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.slip{position:relative;background:#fffdf8;color:#10201a;border-radius:30px 30px 0 0;padding:44px 44px 64px;transform:rotate(-1.6deg);box-shadow:0 50px 90px -40px rgba(0,0,0,.7);
+-webkit-mask:radial-gradient(circle 9px at 50% 100%,transparent 98%,#000) 0 0/26px 100% repeat-x;mask:radial-gradient(circle 9px at 50% 100%,transparent 98%,#000) 0 0/26px 100% repeat-x}
+.k{font-size:17px;font-weight:700;letter-spacing:2.6px;text-transform:uppercase;color:#6b776f}
+.me{display:flex;align-items:center;gap:28px;margin-top:22px}.me img{width:150px;height:150px;border-radius:50%;object-fit:cover;background:#ebe6da}
+.name{font-size:50px;font-weight:800;letter-spacing:-1.8px;line-height:1.05}.role{margin-top:8px;font-size:23px;color:#34443c;font-weight:500}
+.rule{border-top:2px dashed #d3cab8;margin:32px 0 24px}
+.row{display:flex;justify-content:space-between;font-size:22px;color:#34443c;margin-top:12px}.row b{color:#10201a;font-weight:600}
+.stamp{position:absolute;top:40px;right:40px;border:3px solid #0f7b53;color:#0f7b53;border-radius:10px;padding:5px 14px;font-size:18px;font-weight:800;letter-spacing:2.4px;transform:rotate(-8deg)}
+</style></head><body>
+<div class="ai">✦ ${AI_NOTE}</div>
+<div class="wrap">
+  <div>
+    <div class="brand"><img src="${asset('public/owed-mark.svg', 'image/svg+xml')}"><b>owed</b></div>
+    <div class="tag">An AI collections copilot for freelancers who bill with PayPal. <em>Agents draft, you approve.</em></div>
+    <div class="chips"><span>Claude agents</span><span>AG Studio</span><span>PayPal Invoicing v2</span><span>PayPal Agent Toolkit</span></div>
+    <div class="hk">PayPal AI Hackathon 2026 · entry</div>
+  </div>
+  <div class="slip">
+    <span class="stamp">BUILDER</span>
+    <div class="k">Built by</div>
+    <div class="me"><img src="${asset('video/assets/edilson.jpg', 'image/jpeg')}"><div><div class="name">Edilson Santos</div><div class="role">Backend developer</div></div></div>
+    <div class="rule"></div>
+    <div class="row"><span>Experience</span><b>11 years, PHP in production</b></div>
+    <div class="row"><span>Focus</span><b>APIs, automation, infrastructure</b></div>
+    <div class="row"><span>Based in</span><b>Johannesburg, South Africa</b></div>
+    <div class="row"><span>Portfolio</span><b>edilsonsantos.co.za</b></div>
+  </div>
+</div></body></html>`;
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const pause = (ms: number) => sleep(ms);
@@ -61,9 +109,9 @@ export const SHOTS: Shot[] = [
   {
     id: 'title',
     narration:
-      "You did the work. You sent the invoice through PayPal. And now it's three weeks late, and you're wondering how hard to push. That's what Owed is for.",
+      "Hi, I'm Edilson Santos, a backend developer from Johannesburg. If you freelance, you know this one: the work is done, the invoice went out through PayPal, and now it's three weeks late. So I built Owed.",
     run: async (page) => {
-      await page.setContent(card('owed', 'An AI collections copilot for freelancers who bill with PayPal', 'Claude agents · AG Studio · PayPal Invoicing & Agent Toolkit'));
+      await page.setContent(intro(), { waitUntil: 'networkidle' });
       await pause(1500);
     },
   },  {

@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, Logo, cx } from './ui';
 
 export type TourView = 'overview' | 'clients' | 'approvals' | 'activity';
@@ -361,13 +362,19 @@ export default function WelcomeTour({
   const Icon = current?.icon ?? PlugZap;
   const spot = anchor ? box : null;
 
-  return (
-    <div className="fixed inset-0 z-[60]">
+  // Rendered on <body> so no part of the app (the side nav included) can sit above the spotlight.
+  return createPortal(
+    <div className="fixed inset-0 z-[1000]">
       {spot ? (
         <div
           aria-hidden
-          className="pointer-events-none fixed rounded-[26px] ring-2 ring-mint transition-all duration-300 ease-out"
-          style={{ ...spot, boxShadow: '0 0 0 9999px rgb(16 32 26 / 0.55)' }}
+          className="pointer-events-none fixed rounded-[26px] transition-all duration-300 ease-out"
+          style={{
+            ...spot,
+            outline: '2px solid #3ddc97',
+            background: 'rgb(61 220 151 / 0.07)',
+            boxShadow: '0 0 0 9999px rgb(16 32 26 / 0.55), 0 0 28px 4px rgb(61 220 151 / 0.35)',
+          }}
         />
       ) : (
         <div aria-hidden className="fixed inset-0 bg-ink/45 backdrop-blur-[2px]" />
@@ -435,7 +442,8 @@ export default function WelcomeTour({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
