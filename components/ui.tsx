@@ -69,12 +69,25 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   );
 }
 
-export function Logo({ size = 28 }: { size?: number }) {
+/** The Owed mark: an open ring (the unpaid balance) closed by an emerald tick (settled). */
+export function Logo({ size = 28, inverted = false }: { size?: number; inverted?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect width="32" height="32" rx="8" fill="#0f1729" />
-      <circle cx="16" cy="16" r="7.5" fill="none" stroke="#fff" strokeWidth="3.2" />
-      <path d="M16 8.5a7.5 7.5 0 0 1 7.5 7.5" fill="none" stroke="#34d399" strokeWidth="3.2" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden>
+      <rect width="48" height="48" rx="13" fill={inverted ? '#ffffff' : '#0f1729'} />
+      <path d="M33.5 14.2A13 13 0 1 0 37 24" fill="none" stroke={inverted ? '#0f1729' : '#ffffff'} strokeWidth="4.6" strokeLinecap="round" />
+      <path d="M18.5 23.5l5 5 13.5-14" fill="none" stroke={inverted ? '#0b8a5f' : '#34d399'} strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+/** Mark + lowercase wordmark. */
+export function Brand({ size = 28, inverted = false, className }: { size?: number; inverted?: boolean; className?: string }) {
+  return (
+    <span className={cx('inline-flex items-center gap-2.5', className)}>
+      <Logo size={size} inverted={inverted} />
+      <span className={cx('font-semibold tracking-[-0.04em]', inverted ? 'text-white' : 'text-ink')} style={{ fontSize: size * 0.72 }}>
+        owed
+      </span>
+    </span>
   );
 }

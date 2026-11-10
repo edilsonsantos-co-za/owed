@@ -80,20 +80,20 @@ const theme = studioTheme.withParams({
   chartSubtleTextColor: '#6b7385',
   // Distinguishable series colours. Studio orders series alphabetically, so the forecast's High / Low / Medium
   // confidence lands on green / red / amber.
-  chartPaletteFills1Color: '#0b8a5f',
-  chartPaletteFills2Color: '#e1475a',
+  chartPaletteFills1Color: '#10b981',
+  chartPaletteFills2Color: '#a78bfa',
   chartPaletteFills3Color: '#f59e0b',
   chartPaletteFills4Color: '#6d4aff',
-  chartPaletteFills5Color: '#0ea5e9',
+  chartPaletteFills5Color: '#38bdf8',
   chartPaletteFills6Color: '#94a3b8',
-  chartPaletteFills7Color: '#14b8a6',
-  chartPaletteStrokes1Color: '#0b8a5f',
-  chartPaletteStrokes2Color: '#e1475a',
+  chartPaletteFills7Color: '#818cf8',
+  chartPaletteStrokes1Color: '#10b981',
+  chartPaletteStrokes2Color: '#a78bfa',
   chartPaletteStrokes3Color: '#f59e0b',
   chartPaletteStrokes4Color: '#6d4aff',
-  chartPaletteStrokes5Color: '#0ea5e9',
+  chartPaletteStrokes5Color: '#38bdf8',
   chartPaletteStrokes6Color: '#94a3b8',
-  chartPaletteStrokes7Color: '#14b8a6',
+  chartPaletteStrokes7Color: '#818cf8',
 });
 
 // View mode is a clean dashboard; "copilot" is edit mode showing only the chat; "customize" is the full editor.

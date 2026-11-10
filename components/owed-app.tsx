@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { CircleHelp, History, Inbox, LayoutDashboard, LogOut, PanelsTopLeft, RefreshCw, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
+import { CircleHelp, History, Inbox, LayoutDashboard, LogOut, PanelsTopLeft, RefreshCw, ShieldCheck, Sparkles, Users, X, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgReportState, AgStudioApi } from 'ag-studio';
 import type { Ledger } from '@/lib/receivables';
@@ -15,7 +15,7 @@ import EditorBar from './editor-bar';
 import KpiStrip from './kpi-strip';
 import MorningBrief from './morning-brief';
 import type { StudioSurface } from './studio-dashboard';
-import { Badge, Button, Logo, cx } from './ui';
+import { Badge, Brand, Button, Logo, cx } from './ui';
 import WelcomeTour, { SETUP_STEP, tourSeen, type TourTarget } from './welcome-tour';
 
 // AG Studio measures the DOM, so it renders in the browser only.
@@ -225,32 +225,42 @@ export default function OwedApp({
 
   return (
     <div className="flex h-dvh bg-canvas text-ink">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
-        <div className="flex items-center gap-2.5 px-5 pb-4 pt-5">
-          <Logo />
-          <span className="text-[17px] font-semibold tracking-tight">Owed</span>
+      <aside className="hidden w-64 shrink-0 flex-col bg-ink text-white lg:flex">
+        <div className="px-5 pb-5 pt-6">
+          <Brand size={30} inverted />
         </div>
-        <div className="mx-3 mb-3 rounded-lg border border-line px-3 py-2">
-          <p className="truncate text-[13px] font-semibold">{ledger?.business ?? 'Loading…'}</p>
-          <p className="text-xs text-muted">{live ? 'PayPal sandbox account' : 'Demo workspace'}</p>
+        <div className="mx-3 mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/10 text-xs font-semibold">
+            {(ledger?.business ?? 'O').slice(0, 2).toUpperCase()}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-semibold">{ledger?.business ?? 'Loading…'}</span>
+            <span className="flex items-center gap-1.5 text-xs text-white/55">
+              <span className={cx('size-1.5 rounded-full', live ? 'bg-[#34d399]' : 'bg-amber-400')} />
+              {live ? 'PayPal sandbox' : 'Demo workspace'}
+            </span>
+          </span>
         </div>
+        <p className="px-5 pb-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-white/35">Workspace</p>
         <nav className="flex flex-col gap-0.5 px-3" aria-label="Main">
           {(Object.keys(VIEWS) as View[]).map((id) => {
             const item = VIEWS[id];
+            const active = view === id;
             return (
               <button
                 key={id}
                 onClick={() => go(id)}
-                aria-current={view === id ? 'page' : undefined}
+                aria-current={active ? 'page' : undefined}
                 className={cx(
-                  'flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors',
-                  view === id ? 'bg-black/[0.05] font-semibold text-ink' : 'text-ink-2 hover:bg-black/[0.03]',
+                  'group relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors',
+                  active ? 'bg-white/10 font-semibold text-white' : 'text-white/65 hover:bg-white/[0.05] hover:text-white',
                 )}
               >
-                <item.icon className={cx('size-4', view === id ? 'text-ink' : 'text-muted')} />
+                {active && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-[#34d399]" />}
+                <item.icon className={cx('size-[18px]', active ? 'text-[#34d399]' : 'text-white/45 group-hover:text-white/80')} />
                 {item.label}
                 {id === 'approvals' && pending > 0 && (
-                  <span className="ml-auto rounded-full bg-ai px-1.5 text-[11px] font-semibold leading-5 text-white">{pending}</span>
+                  <span className="ml-auto rounded-full bg-ai px-2 text-[11px] font-semibold leading-5 text-white">{pending}</span>
                 )}
               </button>
             );
@@ -260,44 +270,47 @@ export default function OwedApp({
         <div className="mt-auto space-y-2 p-3">
           <button
             onClick={() => setTour({ open: true, step: 0 })}
-            className="flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm text-ink-2 hover:bg-black/[0.03]"
+            className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm text-white/65 hover:bg-white/[0.05] hover:text-white"
           >
-            <CircleHelp className="size-4 text-muted" />
+            <CircleHelp className="size-[18px] text-white/45" />
             How Owed works
           </button>
           <button
             onClick={() => setTour({ open: true, step: SETUP_STEP })}
-            className="block w-full rounded-lg border border-line p-3 text-left text-xs hover:border-line-strong hover:bg-canvas"
+            className="block w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-left text-xs hover:border-white/20 hover:bg-white/[0.07]"
             title="See what to connect and how"
           >
-            <p className="mb-2 flex items-center font-semibold text-ink">
+            <p className="mb-2.5 flex items-center font-semibold text-white">
               Connections
-              <span className="ml-auto font-medium text-ai">Set up</span>
+              <span className="ml-auto font-medium text-[#b9a6ff]">Set up</span>
             </p>
-            <p className="flex items-center gap-2 text-ink-2">
-              <span className={cx('size-2 rounded-full', live ? 'bg-good' : 'bg-amber-400')} />
+            <p className="flex items-center gap-2 text-white/70">
+              <span className={cx('size-2 rounded-full', live ? 'bg-[#34d399]' : 'bg-amber-400')} />
               PayPal {live ? 'sandbox' : '· demo data'}
             </p>
-            <p className="mt-1.5 flex items-center gap-2 text-ink-2">
-              <span className={cx('size-2 rounded-full', aiEnabled ? 'bg-good' : 'bg-faint')} />
-              Claude agents {aiEnabled ? '' : '· off'}
+            <p className="mt-1.5 flex items-center gap-2 text-white/70">
+              <span className={cx('size-2 rounded-full', aiEnabled ? 'bg-[#34d399]' : 'bg-white/25')} />
+              Claude agents {aiEnabled ? '· on' : '· off'}
             </p>
           </button>
-          <p className="px-1 text-[11px] leading-snug text-faint">Agents only draft. Nothing reaches a client without your approval.</p>
+          <p className="flex gap-2 px-1 text-[11px] leading-snug text-white/40">
+            <ShieldCheck className="size-3.5 shrink-0 text-[#34d399]/70" />
+            Agents only draft. Nothing reaches a client without your approval.
+          </p>
           {user && (
-            <div className="flex items-center gap-2 border-t border-line px-1 pt-3">
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ai-soft text-xs font-semibold text-ai">
+            <div className="flex items-center gap-2.5 border-t border-white/10 px-1 pt-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-ai text-xs font-semibold text-white">
                 {(user.name || user.email || '?').slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-semibold">{user.name || user.email}</span>
                 {user.owner ? (
-                  <a href="/admin" className="block text-[11px] text-ai hover:underline">Sign-ups</a>
+                  <a href="/admin" className="block text-[11px] text-[#b9a6ff] hover:underline">Sign-ups</a>
                 ) : (
-                  <span className="block truncate text-[11px] text-muted">{user.email}</span>
+                  <span className="block truncate text-[11px] text-white/50">{user.email}</span>
                 )}
               </span>
-              <a href="/auth/sign-out" className="text-[11px] font-medium text-muted hover:text-ink" title="Sign out">
+              <a href="/auth/sign-out" className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Sign out">
                 <LogOut className="size-4" />
               </a>
             </div>
@@ -306,13 +319,13 @@ export default function OwedApp({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center gap-3 border-b border-line bg-surface/80 px-4 py-3 backdrop-blur sm:px-6">
+        <header className="flex flex-wrap items-center gap-3 border-b border-line bg-surface/80 px-4 py-3.5 backdrop-blur sm:px-8">
           <div className="flex items-center gap-2 lg:hidden">
             <Logo size={24} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold tracking-tight">{VIEWS[view].title}</h1>
+              <h1 className="text-xl font-semibold tracking-[-0.03em]">{VIEWS[view].title}</h1>
               {ledger && !live && <Badge tone="warn">Demo data</Badge>}
             </div>
             <p className="hidden text-[13px] text-muted sm:block">
@@ -366,7 +379,7 @@ export default function OwedApp({
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-6">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-8">
             {error && <div className="rounded-lg border border-bad/20 bg-bad-soft px-4 py-3 text-sm text-bad">Could not load PayPal data: {error}</div>}
 
             {view === 'overview' &&

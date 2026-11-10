@@ -2,9 +2,9 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { connection } from 'next/server';
-import { ArrowRight, Bot, CalendarClock, CheckCircle2, Gauge, Code2 as Github, Inbox, LayoutDashboard, Link2 as Linkedin, PlayCircle, ShieldCheck, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Bot, CalendarClock, CheckCircle2, Gauge, Code2 as Github, Inbox, LayoutDashboard, Link2 as Linkedin, PlayCircle, ShieldCheck, Sparkles, Trophy } from 'lucide-react';
 import { SESSION_COOKIE, authEnabled, readSession } from '@/lib/auth';
-import { Logo } from '@/components/ui';
+import { Brand } from '@/components/ui';
 
 const REPO = 'https://github.com/edilsonsantos-co-za/owed';
 const DEVPOST = 'https://paypalaihackathon.devpost.com/';
@@ -19,24 +19,26 @@ function Label({ children }: { children: React.ReactNode }) {
   return <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{children}</p>;
 }
 
-async function Cta({ size = 'lg' }: { size?: 'lg' | 'sm' }) {
+async function Cta({ size = 'lg', dark = false }: { size?: 'lg' | 'sm'; dark?: boolean }) {
   await connection();
   const user = await readSession((await cookies()).get(SESSION_COOKIE)?.value);
   const big = size === 'lg';
   const btn = big ? 'h-12 px-5 text-[15px]' : 'h-9 px-3.5 text-sm';
+  const primary = dark ? 'bg-white text-ink hover:bg-white/90' : 'bg-brand text-white hover:bg-brand-hover';
+  const secondary = dark ? 'border border-white/20 text-white hover:bg-white/10' : 'border border-line-strong bg-surface hover:bg-canvas';
   if (user || !authEnabled()) {
     return (
-      <a href="/app" className={`inline-flex items-center gap-2 rounded-xl bg-brand font-semibold text-white hover:bg-brand-hover ${btn}`}>
+      <a href="/app" className={`inline-flex items-center gap-2 rounded-xl font-semibold ${primary} ${btn}`}>
         Open the dashboard <ArrowRight className="size-4" />
       </a>
     );
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <a href="/auth/register" className={`inline-flex items-center gap-2 rounded-xl bg-brand font-semibold text-white hover:bg-brand-hover ${btn}`}>
+      <a href="/auth/register" className={`inline-flex items-center gap-2 rounded-xl font-semibold ${primary} ${btn}`}>
         {big ? 'Create a free account' : 'Sign up'} <ArrowRight className="size-4" />
       </a>
-      <a href="/auth/sign-in" className={`inline-flex items-center rounded-xl border border-line-strong bg-surface font-semibold hover:bg-canvas ${btn}`}>
+      <a href="/auth/sign-in" className={`inline-flex items-center rounded-xl font-semibold ${secondary} ${btn}`}>
         Sign in
       </a>
     </div>
@@ -96,61 +98,107 @@ const STEPS = [
 export default function Landing({ searchParams }: PageProps<'/'>) {
   return (
     <div className="min-h-dvh bg-canvas text-ink">
-      <header className="sticky top-0 z-20 border-b border-line bg-surface/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Logo />
-            <span className="text-[17px] font-semibold tracking-tight">Owed</span>
-          </Link>
-          <nav className="ml-6 hidden gap-6 text-sm font-medium text-ink-2 md:flex">
-            <a href="#how" className="hover:text-ink">How it works</a>
-            <a href="#built" className="hover:text-ink">Built with</a>
-            <a href="#hackathon" className="hover:text-ink">Hackathon</a>
-            <a href="#about" className="hover:text-ink">About</a>
-          </nav>
-          <div className="ml-auto">
-            <Suspense fallback={null}>
-              <Cta size="sm" />
-            </Suspense>
-          </div>
-        </div>
-      </header>
+      <div className="relative overflow-hidden bg-ink text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:40px_40px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
+        />
+        <div aria-hidden className="pointer-events-none absolute -right-40 top-10 size-[640px] rounded-full bg-[radial-gradient(closest-side,rgba(109,74,255,0.35),transparent)]" />
+        <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 size-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(52,211,153,0.14),transparent)]" />
 
-      <Suspense fallback={null}>
-        <AuthNotice searchParams={searchParams as Promise<{ auth?: string }>} />
-      </Suspense>
+        <header className="sticky top-0 z-20 border-b border-white/10 bg-ink/80 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
+            <Link href="/" aria-label="Owed home">
+              <Brand inverted />
+            </Link>
+            <nav className="ml-6 hidden gap-6 text-sm font-medium text-white/65 md:flex">
+              <a href="#how" className="hover:text-white">How it works</a>
+              <a href="#built" className="hover:text-white">Built with</a>
+              <a href="#hackathon" className="hover:text-white">Hackathon</a>
+              <a href="#about" className="hover:text-white">About</a>
+            </nav>
+            <div className="ml-auto">
+              <Suspense fallback={null}>
+                <Cta size="sm" dark />
+              </Suspense>
+            </div>
+          </div>
+        </header>
+
+        <Suspense fallback={null}>
+          <AuthNotice searchParams={searchParams as Promise<{ auth?: string }>} />
+        </Suspense>
+
+        <section className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 lg:grid-cols-[1fr_1.15fr] lg:pb-28 lg:pt-20">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-semibold text-[#c9bcff]">
+              <Sparkles className="size-3.5" /> PayPal AI Hackathon 2026 entry
+            </span>
+            <h1 className="mt-6 text-[clamp(38px,4.1vw,56px)] font-bold leading-[1.02] tracking-[-0.05em]">
+              <span className="lg:whitespace-nowrap">Get paid for the work</span> <span className="block text-[#34d399]">you already did.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-white/70">
+              Owed is an AI collections copilot for freelancers and small studios who bill through PayPal. Claude agents read your
+              invoices, judge how each client really pays, and draft the right reminder. You approve before anything is sent.
+            </p>
+            <div className="mt-8">
+              <Suspense fallback={<div className="h-12" />}>
+                <Cta dark />
+              </Suspense>
+            </div>
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-white/60">
+              {['Agents only draft', 'Every send is your click', 'Open source, MIT'].map((t) => (
+                <li key={t} className="flex items-center gap-1.5"><BadgeCheck className="size-4 text-[#34d399]" />{t}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="relative">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-1.5 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.7)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/screens/overview.png" alt="Owed receivables dashboard" className="w-full rounded-xl" />
+            </div>
+            <div className="absolute -bottom-8 -left-4 w-[min(320px,85%)] rounded-2xl border border-line bg-surface p-4 text-ink shadow-[var(--shadow-pop)] sm:-left-10">
+              <div className="flex items-center gap-2 text-xs font-semibold text-ai"><Sparkles className="size-3.5" /> Draft ready for you</div>
+              <p className="mt-2 text-sm font-semibold">Final notice · Vantage Robotics</p>
+              <p className="text-xs text-muted">$8,900 · 48 days late · usually pays 49 days late</p>
+              <div className="mt-3 flex gap-2">
+                <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-semibold text-white"><CheckCircle2 className="size-3.5" /> Approve &amp; send</span>
+                <span className="inline-flex h-8 items-center rounded-lg border border-line-strong px-3 text-xs font-semibold">Edit</span>
+              </div>
+            </div>
+            <div className="absolute -right-3 -top-5 hidden items-center gap-2 rounded-full border border-white/10 bg-ink/90 px-3.5 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur sm:flex">
+              <span className="size-2 rounded-full bg-[#34d399]" /> $7,130 collected this month
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="border-b border-line bg-surface">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-4 py-5 text-sm text-muted">
+          <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-faint">Built on</span>
+          <span className="font-semibold text-ink">PayPal <span className="font-normal text-muted">Invoicing v2 · Agent Toolkit</span></span>
+          <span className="font-semibold text-ink">Claude <span className="font-normal text-muted">by Anthropic</span></span>
+          <span className="font-semibold text-ink">AG Studio <span className="font-normal text-muted">by AG Grid</span></span>
+        </div>
+      </div>
 
       <main className="mx-auto max-w-6xl px-4 pb-16">
-        {/* Hero bento */}
-        <section className="grid gap-3 pt-8 lg:grid-cols-5">
-          <Tile className="flex flex-col justify-between gap-8 lg:col-span-2">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-ai-soft px-3 py-1 text-xs font-semibold text-ai">
-                <Sparkles className="size-3.5" /> PayPal AI Hackathon 2026 entry
-              </span>
-              <h1 className="mt-5 text-[clamp(36px,5vw,56px)] font-bold leading-[0.98] tracking-[-0.045em]">
-                Get paid for the work you already did.
-              </h1>
-              <p className="mt-4 text-[17px] leading-relaxed text-ink-2">
-                Owed is an AI collections copilot for freelancers and small studios who bill through PayPal. Claude agents read your
-                invoices, judge how each client really pays, and draft the right reminder — you approve before anything is sent.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <Suspense fallback={<div className="h-12" />}>
-                <Cta />
-              </Suspense>
-              <p className="text-xs text-muted">Free · sign in with your DataSparkLab account · runs on PayPal sandbox data</p>
-            </div>
-          </Tile>
+        {/* Demo video */}
+        <section className="grid items-center gap-3 pt-12 lg:grid-cols-5">
           <Tile className="p-3 lg:col-span-3">
             <Suspense fallback={<div className="skeleton aspect-video w-full" />}>
               <VideoSlot />
             </Suspense>
-            <p className="px-2 pt-3 text-sm text-muted">
-              <span className="font-semibold text-ink">Watch the 3-minute demo:</span> from overdue invoice to an approved PayPal reminder.
-            </p>
           </Tile>
+          <div className="px-2 lg:col-span-2 lg:pl-6">
+            <Label>See it work</Label>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight">From overdue invoice to an approved PayPal reminder</h2>
+            <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
+              A three-minute walk through the dashboard, the agents deciding how firm to be with each client, and the approval queue
+              where every reminder waits for you.
+            </p>
+          </div>
         </section>
 
         {/* Problem / numbers */}
@@ -299,8 +347,8 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
 
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-6 text-sm text-muted">
-          <Logo size={22} />
-          <span>Owed · open source under MIT</span>
+          <Brand size={22} />
+          <span>· open source under MIT</span>
           <span className="ml-auto">© 2026 Edilson Santos · Made in Johannesburg</span>
         </div>
       </footer>
