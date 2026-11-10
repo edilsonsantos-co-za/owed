@@ -5,15 +5,15 @@ import { avatarColours, initials } from '@/lib/format';
 export const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(' ');
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cx('rounded-xl border border-line bg-surface shadow-[var(--shadow-card)]', className)}>{children}</div>;
+  return <div className={cx('rounded-2xl border border-line bg-surface shadow-[var(--shadow-card)]', className)}>{children}</div>;
 }
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'ai' | 'danger';
 const BUTTON: Record<ButtonVariant, string> = {
   primary: 'bg-brand text-white hover:bg-brand-hover shadow-sm',
   secondary: 'border border-line-strong bg-surface text-ink hover:bg-canvas shadow-sm',
-  ghost: 'text-ink-2 hover:bg-black/[0.04]',
-  ai: 'bg-ai text-white hover:bg-[#5b38f0] shadow-sm',
+  ghost: 'text-ink-2 hover:bg-sunken',
+  ai: 'bg-ai text-white hover:bg-[#4b31cc] shadow-sm',
   danger: 'text-bad hover:bg-bad-soft',
 };
 
@@ -27,7 +27,7 @@ export function Button({
     <button
       {...props}
       className={cx(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-1.5 rounded-[10px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
         size === 'sm' ? 'h-8 px-2.5 text-[13px]' : 'h-9 px-3.5 text-sm',
         BUTTON[variant],
         className,
@@ -38,12 +38,12 @@ export function Button({
 
 type BadgeTone = 'neutral' | 'good' | 'warn' | 'bad' | 'ai' | 'info';
 const BADGE: Record<BadgeTone, string> = {
-  neutral: 'bg-black/[0.05] text-ink-2',
+  neutral: 'bg-sunken text-ink-2',
   good: 'bg-good-soft text-good',
   warn: 'bg-warn-soft text-warn',
   bad: 'bg-bad-soft text-bad',
   ai: 'bg-ai-soft text-ai',
-  info: 'bg-sky-50 text-sky-700',
+  info: 'bg-sunken text-ink',
 };
 
 export function Badge({ tone = 'neutral', dot, className, children }: { tone?: BadgeTone; dot?: boolean; className?: string; children: ReactNode }) {
@@ -73,9 +73,9 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
 export function Logo({ size = 28, inverted = false }: { size?: number; inverted?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden>
-      <rect width="48" height="48" rx="13" fill={inverted ? '#ffffff' : '#0f1729'} />
-      <path d="M33.5 14.2A13 13 0 1 0 37 24" fill="none" stroke={inverted ? '#0f1729' : '#ffffff'} strokeWidth="4.6" strokeLinecap="round" />
-      <path d="M18.5 23.5l5 5 13.5-14" fill="none" stroke={inverted ? '#0b8a5f' : '#34d399'} strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="48" height="48" rx="13" fill={inverted ? '#f4f1ea' : '#10201a'} />
+      <path d="M33.5 14.2A13 13 0 1 0 37 24" fill="none" stroke={inverted ? '#10201a' : '#f4f1ea'} strokeWidth="4.6" strokeLinecap="round" />
+      <path d="M18.5 23.5l5 5 13.5-14" fill="none" stroke={inverted ? '#0f7b53' : '#3ddc97'} strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -90,4 +90,17 @@ export function Brand({ size = 28, inverted = false, className }: { size?: numbe
       </span>
     </span>
   );
+}
+
+type StampTone = 'bad' | 'good' | 'ai' | 'warn';
+const STAMP: Record<StampTone, string> = { bad: 'text-bad', good: 'text-good', ai: 'text-ai', warn: 'text-warn' };
+
+/** Rubber-stamp mark (OVERDUE, PAID, DRAFT): the Ledger signature. */
+export function Stamp({ tone = 'bad', className, children }: { tone?: StampTone; className?: string; children: ReactNode }) {
+  return <span className={cx('stamp', STAMP[tone], className)}>{children}</span>;
+}
+
+/** Small mono uppercase label above headings. */
+export function Eyebrow({ className, children }: { className?: string; children: ReactNode }) {
+  return <p className={cx('eyebrow text-muted', className)}>{children}</p>;
 }

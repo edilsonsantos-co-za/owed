@@ -5,29 +5,36 @@
 @theme inline {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
-  --color-canvas: #f6f7f9;
-  --color-surface: #ffffff;
-  --color-line: #e7e9ee;
-  --color-line-strong: #d6dae2;
-  --color-ink: #0f1729;
-  --color-ink-2: #3b4456;
-  --color-muted: #6b7385;
-  --color-faint: #9aa1b0;
+  /* Ledger: warm paper, forest ink, money green, terracotta for late, violet for agents */
+  --color-canvas: #f4f1ea;
+  --color-sunken: #ebe6da;
+  --color-surface: #fffdf8;
+  --color-line: #e4ddcf;
+  --color-line-strong: #d3cab8;
+  --color-ink: #10201a;
+  --color-ink-2: #34443c;
+  --color-muted: #6b776f;
+  --color-faint: #9ba39c;
 
-  --color-brand: #0f1729;
-  --color-brand-hover: #222c42;
-  --color-ai: #6d4aff;
-  --color-ai-soft: #f1edff;
-  --color-good: #0b8a5f;
-  --color-good-soft: #e7f6ef;
-  --color-warn: #b45d09;
-  --color-warn-soft: #fdf3e4;
-  --color-bad: #c2283c;
-  --color-bad-soft: #fdecee;
+  --color-forest: #10201a;
+  --color-forest-2: #17302a;
+  --color-mint: #3ddc97;
 
-  --shadow-card: 0 1px 2px rgb(15 23 41 / 0.04), 0 1px 3px rgb(15 23 41 / 0.06);
-  --shadow-pop: 0 12px 32px -8px rgb(15 23 41 / 0.18), 0 2px 6px rgb(15 23 41 / 0.06);
+  --color-brand: #10201a;
+  --color-brand-hover: #1f3a31;
+  --color-ai: #5a3fe0;
+  --color-ai-soft: #ece8fc;
+  --color-good: #0f7b53;
+  --color-good-soft: #e2f1e8;
+  --color-warn: #a86a12;
+  --color-warn-soft: #f6ecd8;
+  --color-bad: #c0462a;
+  --color-bad-soft: #f8e5dd;
+
+  --shadow-card: 0 1px 0 rgb(16 32 26 / 0.04), 0 1px 2px rgb(16 32 26 / 0.05);
+  --shadow-pop: 0 24px 48px -16px rgb(16 32 26 / 0.28), 0 4px 10px rgb(16 32 26 / 0.06);
 }
 
 html,
@@ -42,6 +49,50 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Editorial serif for headlines and big numbers */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Perforated bottom edge, like a torn-off invoice or receipt */
+.perforated {
+  -webkit-mask: radial-gradient(circle 5px at 50% 100%, transparent 98%, #000) 0 0 / 16px 100% repeat-x;
+  mask: radial-gradient(circle 5px at 50% 100%, transparent 98%, #000) 0 0 / 16px 100% repeat-x;
+  padding-bottom: 14px;
+}
+
+/* Rubber stamp: OVERDUE, PAID, DRAFT */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+  opacity: 0.9;
+}
+
+/* Hairline grid used on dark ink panels */
+.ledger-grid {
+  background-image: linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 @keyframes owed-shimmer {
   from {
     background-position: -200% 0;
@@ -52,7 +103,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #eef0f4 25%, #f7f8fa 37%, #eef0f4 63%);
+  background: linear-gradient(90deg, #ebe6da 25%, #f4f1ea 37%, #ebe6da 63%);
   background-size: 400% 100%;
   animation: owed-shimmer 1.6s ease infinite;
   border-radius: 6px;

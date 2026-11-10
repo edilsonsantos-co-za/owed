@@ -14,22 +14,22 @@ function Kpi({ label, value, icon, foot, accent, dark }: { label: string; value:
   const body = (
     <>
       <div className="flex items-center justify-between">
-        <span className={cx('text-[13px] font-medium', dark ? 'text-white/60' : 'text-muted')}>{label}</span>
+        <span className={cx('eyebrow text-[10px]', dark ? 'text-white/50' : 'text-muted')}>{label}</span>
         <span className={cx('grid size-8 place-items-center rounded-lg', accent)}>{icon}</span>
       </div>
-      <span className={cx('tabular text-[24px] font-semibold leading-none tracking-[-0.035em] sm:text-[32px]', dark ? 'text-white' : 'text-ink')}>{value}</span>
+      <span className={cx('serif tabular text-[34px] leading-none sm:text-[44px]', dark ? 'text-white' : 'text-ink')}>{value}</span>
       <div className={cx('text-xs', dark ? 'text-white/60' : 'text-muted')}>{foot}</div>
     </>
   );
   if (dark) {
     return (
-      <div className="relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-xl bg-ink p-3 shadow-[var(--shadow-card)] sm:p-5">
-        <span aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-[radial-gradient(closest-side,rgba(109,74,255,0.45),transparent)]" />
+      <div className="ledger-grid relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-2xl bg-forest p-4 shadow-[var(--shadow-card)] sm:p-5">
+        <span aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-[radial-gradient(closest-side,rgba(61,220,151,0.22),transparent)]" />
         <div className="relative flex flex-col gap-3">{body}</div>
       </div>
     );
   }
-  return <Card className="flex min-w-0 flex-col gap-3 p-3 sm:p-5">{body}</Card>;
+  return <Card className="flex min-w-0 flex-col gap-3 p-4 sm:p-5">{body}</Card>;
 }
 
 export default function KpiStrip({ ledger }: { ledger: Ledger }) {
@@ -55,8 +55,8 @@ export default function KpiStrip({ ledger }: { ledger: Ledger }) {
         foot={
           <div className="space-y-2">
             <div className="flex h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full bg-[#34d399]" style={{ width: `${100 - Math.round(share * 100)}%` }} />
-              <div className="h-full bg-[#f43f5e]" style={{ width: `${Math.round(share * 100)}%` }} />
+              <div className="h-full bg-mint" style={{ width: `${100 - Math.round(share * 100)}%` }} />
+              <div className="h-full bg-[#e0694c]" style={{ width: `${Math.round(share * 100)}%` }} />
             </div>
             <span>{`${open.length} open invoice${open.length === 1 ? '' : 's'} across ${new Set(open.map((i) => i.clientId)).size} clients`}</span>
           </div>
@@ -69,7 +69,7 @@ export default function KpiStrip({ ledger }: { ledger: Ledger }) {
         accent="bg-bad-soft text-bad"
         foot={
           <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/[0.06]">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
               <div className="h-full rounded-full bg-bad" style={{ width: `${Math.round(share * 100)}%` }} />
             </div>
             <span className="tabular">{Math.round(share * 100)}% of outstanding</span>

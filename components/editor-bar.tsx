@@ -44,7 +44,7 @@ export default function EditorBar(props: Props) {
           <p className="text-xs text-muted">{dirty ? 'Unsaved changes' : 'No changes yet'}</p>
         </div>
 
-        <div className="ml-2 flex rounded-lg bg-black/[0.05] p-0.5" role="tablist" aria-label="Page">
+        <div className="ml-2 flex rounded-lg bg-sunken p-0.5" role="tablist" aria-label="Page">
           {pages.map((p) => (
             <button
               key={p.id}

@@ -54,6 +54,10 @@ export function publicUrl(path: string, request: { url: string }): URL {
 export const OWNER_ROLE = 'es-owner';
 export const isOwner = (user: SessionUser | null) => !!user?.roles?.includes(OWNER_ROLE);
 
+/** Logto role for Owed's admin pages (core-sso-webapp gives it to the es-owner, so only the platform owner has it). */
+export const ADMIN_ROLE = 'owed-admin';
+export const isAdmin = (user: SessionUser | null) => !!user?.roles?.includes(ADMIN_ROLE);
+
 export async function signSession(user: SessionUser, secret: Uint8Array): Promise<string> {
   return new SignJWT({ ...user })
     .setProtectedHeader({ alg: 'HS256' })

@@ -86,7 +86,7 @@ const STEPS: Step[] = [
   },
   {
     icon: LayoutDashboard,
-    tone: 'bg-sky-50 text-sky-700',
+    tone: 'bg-sunken text-ink',
     title: 'See what you are owed',
     body: (
       <Bullets
@@ -195,7 +195,7 @@ function SetupStep({ setup }: { setup: Setup }) {
   return (
     <>
       <p className="text-sm leading-relaxed text-ink-2">
-        Owed works on demo data out of the box. Add these to <code className="rounded bg-black/[0.05] px-1 text-[13px]">.env.local</code> and restart the server
+        Owed works on demo data out of the box. Add these to <code className="rounded bg-sunken px-1 text-[13px]">.env.local</code> and restart the server
         to switch each one on.
       </p>
       <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
@@ -280,13 +280,13 @@ export default function WelcomeTour({
           <span className="ml-auto text-xs text-muted">
             {step + 1} of {total}
           </span>
-          <button onClick={close} aria-label="Close" className="rounded-md p-1 text-muted hover:bg-black/[0.04] hover:text-ink">
+          <button onClick={close} aria-label="Close" className="rounded-md p-1 text-muted hover:bg-sunken hover:text-ink">
             <X className="size-4" />
           </button>
         </div>
 
         <div className="min-h-0 overflow-y-auto px-6 py-6 max-sm:flex-1 sm:h-[470px]">
-          <span className={cx('grid size-11 place-items-center rounded-xl', current?.tone ?? 'bg-black/[0.05] text-ink-2')}>
+          <span className={cx('grid size-11 place-items-center rounded-xl', current?.tone ?? 'bg-sunken text-ink-2')}>
             {current ? <Icon className="size-5" /> : <PlugZap className="size-5" />}
           </span>
           <h2 id="tour-title" className="mt-4 text-xl font-semibold tracking-tight text-ink">
@@ -302,7 +302,7 @@ export default function WelcomeTour({
                 key={i}
                 tabIndex={-1}
                 onClick={() => setStep(i)}
-                className={cx('h-1.5 rounded-full transition-all', i === step ? 'w-5 bg-ink' : 'w-1.5 bg-black/15 hover:bg-black/30')}
+                className={cx('h-1.5 rounded-full transition-all', i === step ? 'w-5 bg-ink' : 'w-1.5 bg-line-strong hover:bg-faint')}
               />
             ))}
           </div>

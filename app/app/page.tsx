@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { connection } from 'next/server';
 import OwedApp from '@/components/owed-app';
-import { SESSION_COOKIE, isOwner, readSession } from '@/lib/auth';
+import { SESSION_COOKIE, isAdmin, readSession } from '@/lib/auth';
 
 export const metadata: Metadata = { title: 'Owed · Dashboard' };
 
@@ -16,7 +16,7 @@ async function ConfiguredApp() {
       licenseKey={process.env.AG_STUDIO_LICENSE_KEY}
       aiEnabled={!!process.env.ANTHROPIC_API_KEY}
       briefEnabled={!!process.env.ANTHROPIC_API_KEY}
-      user={user && { name: user.name, email: user.email, owner: isOwner(user) }}
+      user={user && { name: user.name, email: user.email, admin: isAdmin(user) }}
     />
   );
 }
