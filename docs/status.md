@@ -14,7 +14,7 @@ Last updated 11 Nov 2026. Submitted to Devpost: <https://devpost.com/software/ow
 | App | Landing, dashboard (Overview, Clients, Approvals, Activity), Ask Owed, Customize, `/admin` (`owed-admin` role) |
 | Walkthrough | 11 steps on first visit (`owed.tour.v2`), opens each page and spotlights it; on the hosted demo the last step shows connection status |
 | Video | <https://www.youtube.com/watch?v=rwOyFtvEFLg> (2:27, recorded by `npm run video` on demo data; agent shots need a Claude key) |
-| Submission assets | `docs/devpost-story.md`, `docs/devpost-technology.md`, `design/gallery/`, `design/brief/owed-brief.pdf`, `design/youtube/` |
+| Submission assets | Moved out of the repo to `~/Desktop/Owed hackathon submission/` (Devpost text, gallery, brief, YouTube assets, rendered video) |
 
 ## After judging
 
