@@ -7,6 +7,13 @@ import { SESSION_COOKIE, authEnabled, readSession } from '@/lib/auth';
 import { Brand, Eyebrow, Stamp, cx } from '@/components/ui';
 
 const REPO = 'https://github.com/edilsonsantos-co-za/owed';
+
+/** GitHub's mark, for the icon-only link in the header. */
+const GitHubMark = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 16 16" aria-hidden className={className} fill="currentColor">
+    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+  </svg>
+);
 const DEVPOST = 'https://paypalaihackathon.devpost.com/';
 const AVATAR = 'https://edilsonsantos.co.za/storage/avatar/G8FHimUVLP_1773882903.jpg';
 
@@ -16,7 +23,6 @@ async function Cta({ size = 'lg', dark = false }: { size?: 'lg' | 'sm'; dark?: b
   const big = size === 'lg';
   const btn = big ? 'h-12 px-5 text-[15px]' : 'h-9 px-4 text-sm';
   const primary = dark ? 'bg-[#f4f1ea] text-forest hover:bg-white' : 'bg-forest text-white hover:bg-brand-hover';
-  const secondary = dark ? 'border border-white/20 text-white hover:bg-white/10' : 'border border-line-strong text-ink hover:bg-sunken';
   if (user || !authEnabled()) {
     return (
       <a href="/app" className={cx('inline-flex items-center gap-2 rounded-full font-medium transition-colors', primary, btn)}>
@@ -25,14 +31,9 @@ async function Cta({ size = 'lg', dark = false }: { size?: 'lg' | 'sm'; dark?: b
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <a href="/auth/register" className={cx('inline-flex items-center gap-2 rounded-full font-medium transition-colors', primary, btn)}>
-        {big ? 'Create a free account' : 'Sign up'} <ArrowRight className="size-4" />
-      </a>
-      <a href="/auth/sign-in" className={cx('inline-flex items-center rounded-full font-medium transition-colors', secondary, btn)}>
-        Sign in
-      </a>
-    </div>
+    <a href="/auth/sign-in" className={cx('inline-flex items-center gap-2 rounded-full font-medium transition-colors', primary, btn)}>
+      Sign in <ArrowRight className="size-4" />
+    </a>
   );
 }
 
@@ -163,10 +164,9 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
               href={REPO}
               aria-label="Owed on GitHub"
               title="Source code on GitHub"
-              className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-ink-2 hover:bg-sunken hover:text-ink"
+              className="grid size-9 place-items-center rounded-full text-ink-2 hover:bg-sunken hover:text-ink"
             >
-              <Github className="size-4" />
-              <span className="hidden sm:inline">GitHub</span>
+              <GitHubMark className="size-[18px]" />
             </a>
             <Suspense fallback={null}>
               <Cta size="sm" />
@@ -192,11 +192,6 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
             Owed is an AI collections copilot for freelancers and small studios who bill through PayPal. Claude agents read your invoices,
             learn how each client really pays, and draft the right reminder. You approve before anything is sent.
           </p>
-          <div className="mt-9">
-            <Suspense fallback={<div className="h-12" />}>
-              <Cta />
-            </Suspense>
-          </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
             {['Agents only draft', 'Every send is your click'].map((t) => (
               <li key={t} className="flex items-center gap-1.5"><Check className="size-4 text-good" />{t}</li>
@@ -379,7 +374,7 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
                 Stop chasing.<br />
                 <em className="text-mint">Start approving.</em>
               </h2>
-              <p className="mt-5 max-w-md text-[15px] text-white/65">Create a free account to explore the dashboard, chat with the agents and approve a reminder on a live PayPal sandbox.</p>
+              <p className="mt-5 max-w-md text-[15px] text-white/65">Sign in to explore the dashboard, chat with the agents and approve a reminder on a live PayPal sandbox.</p>
             </div>
             <Suspense fallback={null}>
               <Cta dark />
