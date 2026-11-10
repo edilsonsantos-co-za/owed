@@ -11,9 +11,31 @@ import type {
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { AgAiEvent, AgAiOutputItem, AgLlmRequest, AgLlmResponse } from 'ag-studio';
 import { MarkdownTidy, tidyMarkdown } from './markdown-tidy';
+import { recordSpend } from './rate-limit';
 
-export const DEFAULT_MODEL = 'claude-opus-5-5';
-export const ALLOWED_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']);
+// One "chase overdue invoices" request is 10-15 agent steps, so the model price adds up fast.
+// Sonnet 5.5 is the default; Haiku 5.5 is the cheap option. Opus 5.5 costs twice Sonnet and is
+// only accepted when OWED_ALLOW_OPUS=1.
+export const DEFAULT_MODEL = process.env.OWED_DEFAULT_MODEL ?? 'claude-sonnet-5-5';
+export const ALLOWED_MODELS = new Set([
+  'claude-sonnet-5-5',
+  'claude-haiku-5-5',
+  ...(process.env.OWED_ALLOW_OPUS === '1' ? ['claude-opus-5-5'] : []),
+]);
+
+// USD per million tokens: input, output, cache read. Cache writes (5-minute TTL) cost 1.25x input.
+const PRICES: Record<string, [number, number, number]> = {
+  'claude-opus-5-5': [4, 20, 0.2],
+  'claude-sonnet-5-5': [2, 10, 0.1],
+  'claude-haiku-5-5': [0.1, 0.5, 0.01],
+};
+
+export function turnCost(model: string, usage: Anthropic.Beta.BetaUsage) {
+  const [input, output, cached] = PRICES[model] ?? PRICES[DEFAULT_MODEL] ?? [4, 20, 0.2];
+  const write = usage.cache_creation_input_tokens ?? 0;
+  const read = usage.cache_read_input_tokens ?? 0;
+  return (usage.input_tokens * input + write * input * 1.25 + read * cached + usage.output_tokens * output) / 1e6;
+}
 const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
 
 const client = new Anthropic();
@@ -115,6 +137,9 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
   const effort = (request.model?.effort && EFFORTS.has(request.model.effort) ? request.model.effort : 'medium') as 'medium';
   const wrapped = new Set<string>();
   const tools = toTools(request, wrapped);
+  // The tool list (AG Studio's agents carry a lot of them) is the same on every step: cache it.
+  const lastTool = tools.at(-1);
+  if (lastTool) Object.assign(lastTool, { cache_control: { type: 'ephemeral' } });
   const toolChoice = request.toolChoice === 'none' ? { type: 'none' as const } : { type: 'auto' as const };
 
   const attempt = async (keepThinking: boolean) => {
@@ -123,6 +148,9 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
       {
         model,
         max_tokens: 32000,
+        // Each step of an agent's tool loop resends the whole conversation; caching it means the next
+        // step pays a tenth of the input price for everything up to here.
+        cache_control: { type: 'ephemeral' },
         system,
         messages,
         tools: tools.length ? tools : undefined,
@@ -221,6 +249,13 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
       });
     }
   }
+
+  const cost = turnCost(model, message.usage);
+  recordSpend(cost);
+  console.info(
+    `[owed-ai] ${model} in=${message.usage.input_tokens} cache_read=${message.usage.cache_read_input_tokens ?? 0} ` +
+      `cache_write=${message.usage.cache_creation_input_tokens ?? 0} out=${message.usage.output_tokens} $${cost.toFixed(4)}`,
+  );
 
   const refused = message.stop_reason === 'refusal';
   return {

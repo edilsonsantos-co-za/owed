@@ -63,7 +63,7 @@ A first-visit walkthrough opens each page in turn.
 
 | Where | Model / tool | What it does |
 | --- | --- | --- |
-| Dashboard chat (6 agents) | Claude Opus 5.5 (Sonnet 5.5 selectable) via the Anthropic Messages API | AG Studio's Agent Framework runs the agents in the browser; Owed's **custom Claude adapter** (`lib/studio/claude-adapter.ts` → `/api/ai/turn` → `lib/claude-turn.ts`) translates each turn to streaming Claude calls with adaptive thinking, and Claude's stream back into AG-UI events. |
+| Dashboard chat (6 agents) | Claude Sonnet 5.5 (Haiku 5.5 selectable; Opus 5.5 with `OWED_ALLOW_OPUS=1`) via the Anthropic Messages API, prompt-cached, with a daily spend cap (`OWED_DAILY_BUDGET_USD`, default $2) | AG Studio's Agent Framework runs the agents in the browser; Owed's **custom Claude adapter** (`lib/studio/claude-adapter.ts` → `/api/ai/turn` → `lib/claude-turn.ts`) translates each turn to streaming Claude calls with adaptive thinking, and Claude's stream back into AG-UI events. |
 | Collections agent | Claude + Owed tools (`get_receivables`, `get_client_profile`, `draft_reminder`, `draft_invoice`) + Studio's `view_schema`/`execute_query` | Judges tone from history, writes reminders and invoices into the approval queue. |
 | Morning brief | Claude + `@paypal/agent-toolkit` (Bedrock-shaped tools mapped to Claude tool use) | Agentic, read-only investigation of the PayPal account; structured JSON output. |
 

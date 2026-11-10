@@ -5,6 +5,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { BetaMessageParam, BetaToolResultBlockParam, BetaToolUnion } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/bedrock';
 import { getLedger, isLive } from './ledger';
+import { DEFAULT_MODEL, turnCost } from './claude-turn';
+import { recordSpend } from './rate-limit';
 
 export interface Brief {
   headline: string;
@@ -81,8 +83,9 @@ export async function getBrief(force = false): Promise<Brief> {
 
   for (let turn = 0; turn < 12; turn++) {
     const response = await client.beta.messages.create({
-      model: 'claude-opus-5-5',
+      model: DEFAULT_MODEL,
       max_tokens: 16000,
+      cache_control: { type: 'ephemeral' },
       system: SYSTEM,
       messages,
       tools: tools.length ? tools : undefined,
@@ -90,6 +93,7 @@ export async function getBrief(force = false): Promise<Brief> {
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
     });
+    recordSpend(turnCost(DEFAULT_MODEL, response.usage));
     messages.push({ role: 'assistant', content: response.content });
 
     if (response.stop_reason === 'tool_use' && toolkit) {
