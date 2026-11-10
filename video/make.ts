@@ -21,7 +21,9 @@ const VOICE = process.env.VOICE ?? 'say';
 const BASE_URL = process.env.VIDEO_BASE_URL ?? 'http://localhost:3000';
 const GAP = 0.5; // seconds of breathing room after each line
 // VIDEO_SHOTS=title,dashboard limits a run to some shots (handy while rehearsing).
-const SHOTS = process.env.VIDEO_SHOTS ? ALL_SHOTS.filter((s) => process.env.VIDEO_SHOTS!.split(',').includes(s.id)) : ALL_SHOTS;
+// Agent shots need a live Claude key; without one they are left out rather than filmed waiting.
+const AVAILABLE = ALL_SHOTS.filter((s) => !s.needsAi || !!process.env.ANTHROPIC_API_KEY);
+const SHOTS = process.env.VIDEO_SHOTS ? AVAILABLE.filter((s) => process.env.VIDEO_SHOTS!.split(',').includes(s.id)) : AVAILABLE;
 const step = process.argv.find((a) => a.startsWith('--step='))?.split('=')[1];
 
 const run = (cmd: string, args: string[]) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }).toString();
@@ -46,6 +48,11 @@ async function voice() {
       const mp3 = path.join(AUDIO, `${shot.id}.mp3`);
       writeFileSync(mp3, Buffer.from(await res.arrayBuffer()));
       run('ffmpeg', ['-y', '-i', mp3, '-ar', '48000', '-ac', '1', wav]);
+    } else if (VOICE === 'kokoro') {
+      // Local neural voice (see video/tts.py); KOKORO_VOICE picks the speaker (default af_heart).
+      const raw = path.join(AUDIO, `${shot.id}.kokoro.wav`);
+      run('uv', ['run', '-q', '--python', '3.12', '--with', 'kokoro-onnx', '--with', 'soundfile', 'python', path.join(ROOT, 'tts.py'), raw, shot.narration]);
+      run('ffmpeg', ['-y', '-i', raw, '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-ar', '48000', '-ac', '1', wav]);
     } else {
       const aiff = path.join(AUDIO, `${shot.id}.aiff`);
       run('say', ['-v', process.env.SAY_VOICE ?? 'Samantha', '-r', '185', '-o', aiff, shot.narration]);
@@ -77,6 +84,8 @@ async function record() {
 
   for (const shot of SHOTS) {
     const audio = duration(path.join(AUDIO, `${shot.id}.wav`)) + GAP;
+    // Loading happens before the shot's clock starts, so it never shows as silent footage.
+    if (shot.prep) await shot.prep(page, { baseUrl: BASE_URL });
     const start = (Date.now() - started) / 1000;
     await shot.run(page, { baseUrl: BASE_URL });
     // Non-fast shots stay on screen at least as long as their narration.
