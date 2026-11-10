@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { FLOW_COOKIE, SESSION_COOKIE, authConfig, finishFlow, sessionMaxAge, signSession, type Flow } from '@/lib/auth';
+import { FLOW_COOKIE, SESSION_COOKIE, authConfig, finishFlow, publicUrl, sessionMaxAge, signSession, type Flow } from '@/lib/auth';
 import { recordSignIn } from '@/lib/users';
 
 export async function GET(request: NextRequest) {
   const config = authConfig();
-  if (!config) return NextResponse.redirect(new URL('/app', request.url));
+  if (!config) return NextResponse.redirect(publicUrl('/app', request));
   const base = config.baseUrl;
   const params = request.nextUrl.searchParams;
   let flow: Flow | null = null;

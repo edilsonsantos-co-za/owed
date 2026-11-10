@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { FLOW_COOKIE, authConfig, safeReturn, startFlow } from '@/lib/auth';
+import { FLOW_COOKIE, authConfig, publicUrl, safeReturn, startFlow } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const config = authConfig();
   const returnTo = request.nextUrl.searchParams.get('returnTo');
-  if (!config) return NextResponse.redirect(new URL(safeReturn(returnTo), request.url));
+  if (!config) return NextResponse.redirect(publicUrl(safeReturn(returnTo), request));
   const { url, flow } = await startFlow(config, {
     register: request.nextUrl.searchParams.get('register') === '1',
     returnTo: returnTo ?? undefined,

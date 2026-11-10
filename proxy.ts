@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE, authEnabled, readSession } from '@/lib/auth';
+import { SESSION_COOKIE, authEnabled, publicUrl, readSession } from '@/lib/auth';
 
 // The landing page, auth routes and health check are public; the app and its API need an SSO session.
 export async function proxy(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     return Response.json({ error: 'Sign in to use Owed.' }, { status: 401 });
   }
-  const url = new URL('/auth/sign-in', request.url);
+  const url = publicUrl('/auth/sign-in', request);
   url.searchParams.set('returnTo', pathname + search);
   return NextResponse.redirect(url);
 }

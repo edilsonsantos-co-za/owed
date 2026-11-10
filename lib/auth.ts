@@ -42,6 +42,15 @@ export function authConfig(): AuthConfig | null {
 
 export const authEnabled = () => authConfig() !== null;
 
+/**
+ * Absolute URL on the public site. Behind the reverse proxy a route handler's request.url is the
+ * container's own address (http://0.0.0.0:3000), so redirects use OWED_BASE_URL when it is set.
+ */
+export function publicUrl(path: string, request: { url: string }): URL {
+  const base = process.env.OWED_BASE_URL?.replace(/\/$/, '');
+  return new URL(path, base ? `${base}/` : request.url);
+}
+
 export const OWNER_ROLE = 'es-owner';
 export const isOwner = (user: SessionUser | null) => !!user?.roles?.includes(OWNER_ROLE);
 
