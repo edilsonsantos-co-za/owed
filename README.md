@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="docs/screenshots/owed-cover.png" alt="Owed: get paid for the work you already did" width="820">
+</p>
+
+<p align="center">
+  <a href="https://owed.edilsonsantos.co.za"><b>Live demo</b></a> ·
+  <a href="https://www.youtube.com/watch?v=rwOyFtvEFLg"><b>Demo video</b></a> ·
+  <a href="https://devpost.com/software/owed-mi23or"><b>Devpost</b></a> ·
+  <a href="LICENSE">MIT licence</a>
+</p>
+
 # Owed
 
 **An AI collections copilot for freelancers and small studios who bill through PayPal invoices.**
@@ -12,14 +23,19 @@ final for 45+ days. Every draft lands in an **approval queue**; nothing reaches 
 **Approve & send**, which sends the reminder through PayPal's Invoicing API. All of it sits inside an
 AG Studio dashboard the same agents can rebuild on request.
 
-Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
+Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026) by
+[Edilson Santos](https://edilsonsantos.co.za).
 
-**Live demo:** <https://owed.edilsonsantos.co.za>. The landing page is public. Create a free account (sign-in is
-DataSparkLab SSO, powered by Logto) to open the dashboard. Judges can use the test account given in the Devpost testing notes.
+**Live demo:** <https://owed.edilsonsantos.co.za>. The landing page is public; the dashboard needs a sign-in
+(DataSparkLab SSO, powered by Logto). Judges can use the test account given in the Devpost testing notes.
+A first-visit walkthrough opens each page in turn.
 
-![Owed receivables overview](docs/screenshots/overview.png)
-
-![Approvals inbox](docs/screenshots/approvals.png)
+| | |
+| --- | --- |
+| ![Receivables overview](docs/screenshots/overview.jpg) | ![Approvals inbox](docs/screenshots/approvals.jpg) |
+| **Overview.** Outstanding, overdue and expected cash, today's focus, aging and a habit-aware cash forecast. | **Approvals.** Every agent draft with its tone and reasoning. Edit, then approve and send through PayPal, or discard. |
+| ![Client payment profiles](docs/screenshots/clients.jpg) | ![First-visit walkthrough](docs/screenshots/walkthrough.jpg) |
+| **Clients.** A payment profile and 0–100 risk score per client, from their PayPal history. | **Walkthrough.** First-time users are guided page by page, with each part spotlighted. |
 
 ## What it does
 
@@ -37,6 +53,9 @@ DataSparkLab SSO, powered by Logto) to open the dashboard. Judges can use the te
 - **Morning brief**: a server-side Claude agent uses **PayPal's Agent Toolkit** (read-only tools:
   `list_invoices`, `get_invoice`, `list_transactions`, `list_disputes`…) to investigate the account and
   write a three-line briefing with today's focus clients.
+- **Guided onboarding**: an 11-step walkthrough on first visit that opens every page and spotlights what it
+  explains, ending on what to connect (reopen it from **How Owed works** in the sidebar).
+- **Admin**: `/admin` lists sign-ups, visible only to holders of the `owed-admin` Logto role.
 - **Demo mode**: with no PayPal credentials, Owed runs on a built-in scenario (seven clients, six months of
   invoices) so anyone can try it in under a minute.
 
@@ -86,7 +105,7 @@ npm run dev
 ```
 
 Sign-in is optional locally: leave `LOGTO_*` empty and the dashboard at `/app` is open. With them set, `/app`,
-`/admin` (owner's sign-up list, Logto role `es-owner`) and the API need an SSO session; `/` stays public.
+`/admin` (sign-up list, Logto role `owed-admin`) and the API need an SSO session; `/` stays public.
 [docs/keys.md](docs/keys.md) explains how to get each key.
 
 ## Deploy
@@ -113,7 +132,9 @@ container on the shared `milkyway` Docker network ([docker-compose.yml](docker-c
 
 ```
 app/
-  page.tsx                  shell (server) → components/owed-app.tsx (client: sidebar, views, toasts)
+  page.tsx                  public landing page
+  app/page.tsx              dashboard shell (server) → components/owed-app.tsx (client: side nav, views, walkthrough)
+  admin/page.tsx            sign-ups, owed-admin role only
   api/ledger                GET   PayPal invoices → receivables model (or demo scenario)
   api/drafts                POST  agents queue a reminder/invoice draft (never touches PayPal)
   api/drafts/[id]           POST  human approves → PayPal remind / create+send; or discard
@@ -129,6 +150,7 @@ lib/
   scenario.ts               the demo business and its clients
   studio/                   AG Studio data sources, report, agent team, browser adapter
 scripts/seed-sandbox.ts     seeds a PayPal sandbox account with the scenario
+video/                      scripted demo video: Playwright recording + local neural voice-over + ffmpeg
 docs/hackathon.md           rules, judging and sponsor notes gathered for this build
 ```
 
@@ -142,6 +164,12 @@ Design choices worth knowing:
   `required`/named tool choice to instructions on models that reject forced tool use.
 - **Tone from data.** The suggested tone and risk score come from the client's real PayPal history, and the
   agent is told to weigh history as much as days overdue.
+
+## Demo video
+
+The [demo video](https://www.youtube.com/watch?v=rwOyFtvEFLg) is recorded by script from the real app
+(`npm run video`, see [video/README.md](video/README.md)): Playwright drives the walkthrough, a local Kokoro
+voice reads each line, and ffmpeg stitches the shots. The voice-over is AI-generated.
 
 ## Licence
 
