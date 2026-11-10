@@ -19,6 +19,9 @@ narration per shot, a Playwright recording of the real app paced to it, and ffmp
 The product tour is the app's own walkthrough, one narrated shot per step. Agent shots (`chase`, `approve`,
 `build`) are only filmed when `ANTHROPIC_API_KEY` is set.
 
+Without a Claude key, seed sample drafts and activity for Approvals and Activity with
+`node --import tsx video/seed-store.ts` and start the app with `OWED_STORE=video.json` (your real store is untouched).
+
 Steps can be re-run on their own: `--step=voice`, `--step=record`, `--step=build`; `VIDEO_SHOTS=title,close`
 limits a run to some shots. Agent shots (`chase`, `build`) are sped up to fit their line, at most 8×.
 
