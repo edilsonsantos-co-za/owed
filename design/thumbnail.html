@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Owed thumbnail</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box}html,body{margin:0}
+body{width:1500px;height:1000px;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif;color:#f4f1ea;position:relative;
+background:radial-gradient(90% 70% at 0% 0%,rgba(61,220,151,.18),transparent 60%),radial-gradient(80% 70% at 100% 100%,rgba(90,63,224,.28),transparent 60%),#10201a}
+.left{position:absolute;left:96px;top:120px;width:700px}
+.brand{display:flex;align-items:center;gap:22px}.brand svg{width:104px;height:104px}.brand b{font-size:118px;font-weight:800;letter-spacing:-6px;line-height:1}
+h1{margin:56px 0 0;font-size:76px;line-height:1.02;font-weight:800;letter-spacing:-3.4px}h1 em{font-style:normal;color:#3ddc97}
+p{margin:30px 0 0;font-size:27px;line-height:1.45;color:rgba(244,241,234,.76);max-width:620px}
+.chips{position:absolute;left:96px;bottom:84px;display:flex;gap:12px}.chips span{padding:11px 20px;border-radius:999px;background:rgba(244,241,234,.09);font-size:20px;font-weight:600;color:rgba(244,241,234,.85)}
+.slip{position:absolute;right:100px;top:150px;width:520px;background:#fffdf8;color:#10201a;border-radius:28px 28px 0 0;padding:40px 40px 60px;transform:rotate(-3deg);box-shadow:0 60px 100px -40px rgba(0,0,0,.75);
+-webkit-mask:radial-gradient(circle 9px at 50% 100%,transparent 98%,#000) 0 0/26px 100% repeat-x;mask:radial-gradient(circle 9px at 50% 100%,transparent 98%,#000) 0 0/26px 100% repeat-x}
+.k{font-size:15px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:#6b776f}
+.who{margin-top:8px;font-size:30px;font-weight:700;letter-spacing:-.6px}
+.row{display:flex;justify-content:space-between;margin-top:14px;font-size:20px;color:#34443c}
+.rule{border-top:2px dashed #d3cab8;margin:26px 0 18px}
+.amt{font-size:84px;font-weight:800;letter-spacing:-4px;line-height:1;margin-top:8px}
+.late{margin-top:12px;font-size:18px;font-weight:600;color:#c0462a}
+.stamp{position:absolute;top:36px;right:34px;border:3px solid #c0462a;color:#c0462a;border-radius:10px;padding:5px 14px;font-size:20px;font-weight:800;letter-spacing:2.6px;transform:rotate(-9deg)}
+.agent{position:absolute;right:150px;top:700px;width:470px;background:#fffdf8;color:#10201a;border-radius:28px;padding:26px 28px;transform:rotate(2deg);box-shadow:0 40px 80px -30px rgba(0,0,0,.7);border:2px solid rgba(90,63,224,.35)}
+.agent .h{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:#5a3fe0}
+.agent .d{margin-left:auto;border:2px solid #5a3fe0;border-radius:8px;padding:2px 10px;font-size:14px;letter-spacing:2px;transform:rotate(-6deg)}
+.agent .t{margin-top:12px;font-size:19px;line-height:1.4;color:#34443c}
+.agent .b{margin-top:16px;display:flex;gap:10px}.agent .b span{padding:10px 18px;border-radius:999px;font-size:17px;font-weight:700}
+.agent .b .y{background:#10201a;color:#fff}.agent .b .n{border:2px solid #d3cab8}
+</style></head><body>
+<div class="left">
+  <div class="brand"><svg viewBox="0 0 48 48"><rect width="48" height="48" rx="13" fill="#f4f1ea"/><path d="M33.5 14.2A13 13 0 1 0 37 24" fill="none" stroke="#10201a" stroke-width="4.6" stroke-linecap="round"/><path d="M18.5 23.5l5 5 13.5-14" fill="none" stroke="#0f7b53" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg><b>owed</b></div>
+  <h1>Get paid for the work <em>you already did.</em></h1>
+  <p>Claude agents read your PayPal invoices and draft the right reminder. Nothing is sent until you approve.</p>
+</div>
+<div class="slip">
+  <span class="stamp">OVERDUE</span>
+  <div class="k">Invoice · OWED-1028</div>
+  <div class="who">Vantage Robotics</div>
+  <div class="row"><span>Product launch landing page</span><span>6,500.00</span></div>
+  <div class="rule"></div>
+  <div class="k">Balance due</div>
+  <div class="amt">$6,500</div>
+  <div class="late">48 days late · largest balance overdue</div>
+</div>
+<div class="agent">
+  <div class="h">✦ Collections agent <span class="d">DRAFT</span></div>
+  <div class="t">48 days late and the largest balance. A final notice is right: amount, days late, work paused.</div>
+  <div class="b"><span class="y">✓ Approve &amp; send</span><span class="n">Edit</span></div>
+</div>
+<div class="chips"><span>Claude agents</span><span>PayPal Invoicing v2</span><span>Agent Toolkit</span><span>AG Studio</span></div>
+</body></html>
