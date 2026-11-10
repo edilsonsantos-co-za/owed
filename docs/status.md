@@ -1,38 +1,25 @@
 # Status and handoff
 
-Last updated 27 Oct 2026. Hackathon deadline: **12 Nov 2026, 12:00 PST** (see [hackathon.md](hackathon.md)).
+Last updated 11 Nov 2026. Submitted to Devpost: <https://devpost.com/software/owed-mi23or>
+(deadline 12 Nov 2026, 12:00 PST; judging 1–15 Dec; see [hackathon.md](hackathon.md)).
 
 ## Where things stand
 
-Owed runs end to end on demo data. Nothing has been tested yet with real Anthropic or PayPal keys.
-
 | Area | State |
 | --- | --- |
-| App shell | Sidebar app: Overview, Clients, Approvals (pending count), Activity, Connections card |
-| Overview | KPI cards, Today's focus / morning brief, themed AG Studio dashboard |
-| Ask Owed | Opens Studio's AI chat panel beside the dashboard; disabled until `ANTHROPIC_API_KEY` is set |
-| Customize | Full-screen editor: page tabs, undo/redo, Reset to default, Cancel, Save (layout saved in browser localStorage, key `owed.dashboard.v1`) |
-| How Owed works | 6-step guide, opens on first visit (`owed.tour.v1` in localStorage), reopen from the sidebar; last step is the setup checklist |
-| Approvals | Inbox with agent reasoning, editable subject and message, Approve & send / Discard |
-| Activity | Timeline of agent, owner and system actions |
-| Dev console | AG Studio's no-licence banner is routed to `console.info`, so the Next.js dev overlay stays at 0 issues |
-| Testing | Stage-by-stage checklist in [testing.md](testing.md) |
-| Video | Pipeline in `video/` (`npm run video`). On hold until the owner is happy with the app |
+| Hosted app | <https://owed.edilsonsantos.co.za>, deployed on every push to `main` |
+| Keys in production | Anthropic, PayPal sandbox (seeded: 29 invoices, 7 clients), AG Studio trial (until 10 Dec 2026), YouTube ID. Set with `console repo:secrets owed --deploy` |
+| Claude | Key valid; the Anthropic account needs credit before the agents and brief work |
+| Sign-in | DataSparkLab SSO (Logto). Self sign-up needs an emailed code; mail is Mailgun sandbox (authorized recipients only), so judges use a test account |
+| App | Landing, dashboard (Overview, Clients, Approvals, Activity), Ask Owed, Customize, `/admin` (`owed-admin` role) |
+| Walkthrough | 11 steps on first visit (`owed.tour.v2`), opens each page and spotlights it; on the hosted demo the last step shows connection status |
+| Video | <https://www.youtube.com/watch?v=rwOyFtvEFLg> (2:27, recorded by `npm run video` on demo data; agent shots need a Claude key) |
+| Submission assets | `docs/devpost-story.md`, `docs/devpost-technology.md`, `design/gallery/`, `design/brief/owed-brief.pdf`, `design/youtube/` |
 
-## What the owner needs to supply
+## After judging
 
-In this order, in `.env.local` (copy `.env.example`), restarting `npm run dev` after each:
-
-1. `ANTHROPIC_API_KEY`: switches on Ask Owed, the agents and the written morning brief.
-2. `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (Sandbox REST app with Invoicing and Transaction search), then `npm run seed`.
-3. Optional: `AG_STUDIO_LICENSE_KEY` (AG Grid 45-day trial) removes the chart watermark.
-4. Later, for submission: a Render account to host the demo (`render.yaml` is ready).
-
-## Agreed order of work
-
-1. Owner tests on demo data, then with each key, using [testing.md](testing.md), and reports issues.
-2. Fix and refine until the owner is happy.
-3. Only then: deploy, record the video, write the Devpost submission.
+- Rotate the Anthropic, PayPal and AG Studio keys (they were shared in chat), and delete the judge test account.
+- Optionally re-record the video with the agent shots once Claude has credit.
 
 ## Running it locally
 
@@ -48,10 +35,4 @@ Gotchas:
   Symptom: localhost:3311 stops answering. Fix: `npm ci`, then start the dev server again.
 - Don't run `npm run build` while the dev server is running; both write to `.next`. Stop the server first, or restart it afterwards.
 - `.data/owed.json` holds local drafts, reminders and the audit log (git-ignored). It was reset to empty before handoff.
-- Clear `owed.tour.v1` / `owed.dashboard.v1` in the browser's localStorage to see the first-visit guide or the default layout again.
-
-## Not yet verified
-
-- AI chat, agents and the Claude-written brief (needs `ANTHROPIC_API_KEY`).
-- Live PayPal: seeding, reading the sandbox ledger, and sending reminders and invoices (needs sandbox credentials).
-- Hosted deploy on Render.
+- Clear `owed.tour.v2` / `owed.dashboard.v1` in the browser's localStorage to see the first-visit guide or the default layout again.
