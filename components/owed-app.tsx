@@ -86,7 +86,6 @@ export default function OwedApp({
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
   const apiRef = useRef<AgStudioApi | null>(null);
-  const studioRef = useRef<HTMLElement | null>(null);
   const pendingRef = useRef<number | null>(null);
   const viewRef = useRef(view);
   const [tour, setTour] = useState<{ open: boolean; step: number }>({
@@ -132,7 +131,13 @@ export default function OwedApp({
     pendingRef.current = pending;
     if (before !== null && pending > before && viewRef.current !== 'approvals') {
       const added = pending - before;
-      notify(`${added} new draft${added === 1 ? '' : 's'} waiting for your approval`, { label: 'Review', onClick: () => go('approvals') });
+      notify(`${added} new draft${added === 1 ? '' : 's'} waiting for your approval`, {
+        label: 'Review',
+        onClick: () => {
+          setSurface('view');
+          go('approvals');
+        },
+      });
     }
   }, [go, notify]);
 
@@ -154,9 +159,9 @@ export default function OwedApp({
     if (!tourSeen()) setTour({ open: true, step: 0 });
   }, []);
 
+  // Owed AI opens as a pop-up over whatever page is showing, so it never has to be found in the page.
   const openCopilot = useCallback(() => {
     if (!aiEnabled) return;
-    if (!VIEWS[viewRef.current].studioPage) go('overview');
     setSurface('copilot');
     const api = apiRef.current;
     if (api)
@@ -167,8 +172,14 @@ export default function OwedApp({
           ai: { ...api.getState().panels?.ai, collapsed: false },
         },
       });
-    requestAnimationFrame(() => studioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-  }, [aiEnabled, go]);
+  }, [aiEnabled]);
+
+  useEffect(() => {
+    if (surface !== 'copilot') return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSurface('view');
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [surface]);
 
   const startEditing = useCallback(() => {
     if (!VIEWS[viewRef.current].studioPage) go('overview');
@@ -221,6 +232,7 @@ export default function OwedApp({
   const pending = snapshot?.drafts.filter((d) => d.status === 'pending').length ?? 0;
   const live = ledger?.mode === 'live';
   const studioVisible = !!VIEWS[view].studioPage;
+  const copilot = surface === 'copilot';
 
   return (
     <div className="flex h-dvh bg-canvas text-ink">
@@ -274,13 +286,13 @@ export default function OwedApp({
             <Button
               variant="ai"
               size="sm"
-              onClick={() => (surface === 'copilot' && studioVisible ? setSurface('view') : openCopilot())}
+              onClick={() => (copilot ? setSurface('view') : openCopilot())}
               disabled={!aiEnabled}
               data-tour="ask"
               title={aiEnabled ? 'Chat with the Owed agents' : 'Set ANTHROPIC_API_KEY to enable the agents'}
             >
               <Sparkles className="size-4" />
-              {surface === 'copilot' && studioVisible ? 'Close Owed AI' : 'Ask Owed'}
+              Ask Owed
             </Button>
           </div>
           <nav className="flex w-full gap-1 overflow-x-auto lg:hidden" aria-label="Main">
@@ -324,15 +336,34 @@ export default function OwedApp({
                 </div>
               ))}
 
+            {copilot && <div className="fixed inset-0 z-40 bg-forest/40 backdrop-blur-[2px]" onClick={() => setSurface('view')} aria-hidden />}
             <section
-              ref={studioRef}
               data-tour="studio"
+              role={copilot ? 'dialog' : undefined}
+              aria-modal={copilot || undefined}
               className={cx(
-                surface === 'customize' ? 'fixed inset-0 z-50 flex flex-col bg-canvas' : 'scroll-mt-4 overflow-hidden rounded-xl',
-                !studioVisible && 'hidden',
+                surface === 'customize' && 'fixed inset-0 z-50 flex flex-col bg-canvas',
+                copilot &&
+                  'fixed inset-2 z-50 mx-auto flex max-w-[1500px] flex-col overflow-hidden rounded-2xl border border-line bg-canvas shadow-[var(--shadow-pop)] sm:inset-6',
+                surface === 'view' && 'overflow-hidden rounded-xl',
+                surface === 'view' && !studioVisible && 'hidden',
               )}
-              aria-label={surface === 'customize' ? 'Dashboard editor' : 'Dashboard'}
+              aria-label={surface === 'customize' ? 'Dashboard editor' : copilot ? 'Owed AI' : 'Dashboard'}
             >
+              {copilot && (
+                <div className="flex shrink-0 items-center gap-3 border-b border-line bg-surface px-4 py-2.5">
+                  <span className="grid size-8 place-items-center rounded-lg bg-ai-soft text-ai">
+                    <Sparkles className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight text-ink">Owed AI</p>
+                    <p className="truncate text-xs text-muted">Drafts go to Approvals. Nothing reaches a client until you send it.</p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSurface('view')} aria-label="Close Owed AI" title="Close (Esc)">
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              )}
               {surface === 'customize' && (
                 <EditorBar
                   pages={initialReport.pages.map((p) => ({
@@ -352,14 +383,10 @@ export default function OwedApp({
                 />
               )}
               <div
-                className={cx(surface === 'customize' && 'min-h-0 flex-1')}
+                className={cx(surface !== 'view' && 'min-h-0 flex-1')}
                 // 36 layout rows of 20px (see lib/studio/report.ts); the AI panel needs at least this much room too.
                 style={
-                  surface === 'customize'
-                    ? undefined
-                    : {
-                        height: surface === 'view' ? 724 : 'max(724px, calc(100dvh - 120px))',
-                      }
+                  surface === 'view' ? { height: 724 } : undefined
                 }
               >
                 {ledger ? (
@@ -409,7 +436,7 @@ export default function OwedApp({
         <div
           key={toast.id}
           role="status"
-          className="toast-in fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-xl bg-forest py-2.5 pl-4 pr-2 text-sm text-white shadow-[var(--shadow-pop)]"
+          className="toast-in fixed bottom-5 right-5 z-[60] flex items-center gap-3 rounded-xl bg-forest py-2.5 pl-4 pr-2 text-sm text-white shadow-[var(--shadow-pop)]"
         >
           <Sparkles className="size-4 text-[#b9a6ff]" />
           {toast.message}

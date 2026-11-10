@@ -24,6 +24,15 @@ const PROMPT_STARTERS: AgAiPromptStarter[] = [
   { label: 'Bill a client', prompt: 'Invoice Fernhill Yoga for this month\'s social content pack, same as last time.' },
 ];
 
+// How replies should look in the chat panel (about 420px wide, renders markdown).
+const CHAT_FORMAT = `Formatting your reply for the chat panel (narrow, renders markdown):
+- Open with one or two plain sentences that answer the question, with the key totals.
+- Break the rest into short sections, each under a "### " heading. Never use a bold line as a heading.
+- Put a blank line before and after every table. Tables have at most 4 short columns; use them for lists of clients or invoices, sorted by what matters most (usually amount overdue).
+- Write "—" for an empty cell, and keep amounts as $1,234.00.
+- For drafts, use one bullet per draft: **Client · invoice number · amount** · tone, then one short sentence on why. Do not repeat the note itself; the owner reads it in Approvals.
+- Finish with at most one suggested next step. No closing pleasantries.`;
+
 interface Hooks {
   ledger: () => Ledger | null;
   onDraft: () => void;
@@ -42,7 +51,9 @@ How to choose a tone (the client's history matters as much as the days late):
 
 Writing reminders: address the contact by first name, name the invoice number, the work, the amount and the due date. Keep the note under 90 words, plain text, no placeholders, signed "${ledger?.business ?? 'The studio'}". Mention they can pay with the PayPal link on the invoice. Subjects under 60 characters.
 
-Workflow: call get_receivables first, then get_client_profile for anyone you are unsure about, then draft_reminder once per invoice. When you finish, give the owner a short summary: what you drafted, for whom, which tone and why, and the total amount you are chasing. Use US dollars.`;
+Workflow: call get_receivables first, then get_client_profile for anyone you are unsure about, then draft_reminder once per invoice. When you finish, give the owner a short summary: what you drafted, for whom, which tone and why, and the total amount you are chasing. Use US dollars.
+
+${CHAT_FORMAT}`;
 }
 
 export function buildAi(hooks: Hooks): AgAiHarnessSetup {
@@ -176,7 +187,8 @@ export function buildAi(hooks: Hooks): AgAiHarnessSetup {
         instructions: (ctx, params) =>
           `${lead.instructions?.(ctx, params) ?? ''}\n\nThis dashboard belongs to a small business that gets paid through PayPal invoices. ` +
           'Anything about chasing payments, overdue clients, reminders, drafting invoices or expected cash goes to the `collections` agent via delegate_to. ' +
-          'Dashboard building (charts, pages, filters) stays with the built-in agents.',
+          'Dashboard building (charts, pages, filters) stays with the built-in agents.\n\n' +
+          CHAT_FORMAT,
         tools: (ctx, params) => [
           ...(lead.tools?.(ctx, params) ?? []).filter((tool) => tool.name !== 'delegate_to'),
           tools.delegateTo(['planning', 'data', 'page', 'widget', 'collections']),

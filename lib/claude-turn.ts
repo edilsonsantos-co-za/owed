@@ -10,6 +10,7 @@ import type {
   BetaToolUnion,
 } from '@anthropic-ai/sdk/resources/beta/messages/messages';
 import type { AgAiEvent, AgAiOutputItem, AgLlmRequest, AgLlmResponse } from 'ag-studio';
+import { MarkdownTidy, tidyMarkdown } from './markdown-tidy';
 
 export const DEFAULT_MODEL = 'claude-opus-5-5';
 export const ALLOWED_MODELS = new Set(['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']);
@@ -137,13 +138,13 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
 
     // Stream Claude's content blocks out as AG-UI events. Tool arguments are held back until the
     // block closes so a wrapped union-root call can be unwrapped before Studio parses it.
-    const blocks = new Map<number, { kind: 'text' | 'thinking' | 'tool'; id: string; name?: string; args: string }>();
+    const blocks = new Map<number, { kind: 'text' | 'thinking' | 'tool'; id: string; name?: string; args: string; tidy?: MarkdownTidy }>();
     for await (const event of stream) {
       if (event.type === 'content_block_start') {
         const b = event.content_block;
         const id = `${event.index}-${crypto.randomUUID()}`;
         if (b.type === 'text') {
-          blocks.set(event.index, { kind: 'text', id, args: '' });
+          blocks.set(event.index, { kind: 'text', id, args: '', tidy: new MarkdownTidy() });
           emit({ type: 'TEXT_MESSAGE_START', messageId: id, role: 'assistant' });
         } else if (b.type === 'thinking') {
           blocks.set(event.index, { kind: 'thinking', id, args: '' });
@@ -155,14 +156,21 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
       } else if (event.type === 'content_block_delta') {
         const open = blocks.get(event.index);
         if (!open) continue;
-        if (event.delta.type === 'text_delta') emit({ type: 'TEXT_MESSAGE_CONTENT', messageId: open.id, delta: event.delta.text });
+        if (event.delta.type === 'text_delta') {
+          const delta = open.tidy!.push(event.delta.text);
+          if (delta) emit({ type: 'TEXT_MESSAGE_CONTENT', messageId: open.id, delta });
+        }
         else if (event.delta.type === 'thinking_delta' && event.delta.thinking)
           emit({ type: 'REASONING_MESSAGE_CONTENT', messageId: open.id, delta: event.delta.thinking });
         else if (event.delta.type === 'input_json_delta') open.args += event.delta.partial_json;
       } else if (event.type === 'content_block_stop') {
         const open = blocks.get(event.index);
         if (!open) continue;
-        if (open.kind === 'text') emit({ type: 'TEXT_MESSAGE_END', messageId: open.id });
+        if (open.kind === 'text') {
+          const rest = open.tidy!.flush();
+          if (rest) emit({ type: 'TEXT_MESSAGE_CONTENT', messageId: open.id, delta: rest });
+          emit({ type: 'TEXT_MESSAGE_END', messageId: open.id });
+        }
         else if (open.kind === 'thinking') emit({ type: 'REASONING_MESSAGE_END', messageId: open.id });
         else {
           emit({ type: 'TOOL_CALL_ARGS', toolCallId: open.id, delta: unwrapArgs(open.name!, open.args || '{}', wrapped) });
@@ -191,7 +199,7 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
       output.push({ id, kind: 'output', type: 'reasoning', summary: block.thinking ? [{ type: 'summary', text: block.thinking }] : [] });
     } else if (block.type === 'text') {
       const last = output.at(-1);
-      if (last?.type === 'message') last.content.push({ type: 'text', text: block.text, annotations: [] });
+      if (last?.type === 'message') last.content.push({ type: 'text', text: tidyMarkdown(block.text), annotations: [] });
       else
         output.push({
           id: `msg_${crypto.randomUUID()}`,
@@ -199,7 +207,7 @@ export async function runTurn(request: AgLlmRequest, emit: Emit, signal: AbortSi
           type: 'message',
           role: 'assistant',
           status: 'completed',
-          content: [{ type: 'text', text: block.text, annotations: [] }],
+          content: [{ type: 'text', text: tidyMarkdown(block.text), annotations: [] }],
         });
     } else if (block.type === 'tool_use') {
       output.push({
