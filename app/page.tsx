@@ -158,7 +158,16 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
             <a href="#built" className="hover:text-ink">Built with</a>
             <a href="#about" className="hover:text-ink">About</a>
           </nav>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <a
+              href={REPO}
+              aria-label="Owed on GitHub"
+              title="Source code on GitHub"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-ink-2 hover:bg-sunken hover:text-ink"
+            >
+              <Github className="size-4" />
+              <span className="hidden sm:inline">GitHub</span>
+            </a>
             <Suspense fallback={null}>
               <Cta size="sm" />
             </Suspense>
@@ -189,9 +198,14 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
             </Suspense>
           </div>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted">
-            {['Agents only draft', 'Every send is your click', 'Open source, MIT'].map((t) => (
+            {['Agents only draft', 'Every send is your click'].map((t) => (
               <li key={t} className="flex items-center gap-1.5"><Check className="size-4 text-good" />{t}</li>
             ))}
+            <li>
+              <a href={REPO} className="flex items-center gap-1.5 underline-offset-4 hover:text-ink hover:underline">
+                <Check className="size-4 text-good" />Open source, MIT
+              </a>
+            </li>
           </ul>
         </div>
         <HeroArt />
@@ -377,7 +391,9 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 text-sm text-muted">
           <Brand size={24} />
-          <span>Open source under MIT</span>
+          <a href={REPO} className="inline-flex items-center gap-1.5 hover:text-ink">
+            <Github className="size-4" /> Open source under MIT · github.com/edilsonsantos-co-za/owed
+          </a>
           <span className="ml-auto">© 2026 Edilson Santos · Made in Johannesburg</span>
         </div>
       </footer>
