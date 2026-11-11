@@ -63,8 +63,8 @@ background:radial-gradient(110% 70% at 0% 0%,rgba(61,220,151,.16),transparent 60
     <div class="k">Built by</div>
     <div class="me"><img src="${asset('video/assets/edilson.jpg', 'image/jpeg')}"><div><div class="name">Edilson Santos</div><div class="role">Full-stack developer</div></div></div>
     <div class="rule"></div>
-    <div class="row"><span>Experience</span><b>11 years, PHP in production</b></div>
-    <div class="row"><span>Focus</span><b>APIs, automation, infrastructure</b></div>
+    <div class="row"><span>Experience</span><b>11 years in production</b></div>
+    <div class="row"><span>Focus</span><b>Web apps, APIs, automation</b></div>
     <div class="row"><span>Based in</span><b>Johannesburg, South Africa</b></div>
     <div class="row"><span>Portfolio</span><b>edilsonsantos.co.za</b></div>
   </div>
