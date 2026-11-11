@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -18,7 +19,7 @@ const ERRORS: Record<string, string> = {
 const field =
   'h-11 w-full rounded-full border border-white/15 bg-white/5 px-4 text-[15px] text-white placeholder:text-white/40 outline-none focus:border-[#34d399] focus:ring-2 focus:ring-[#34d399]/30';
 
-export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; returnTo?: string }> }) {
+async function SignUpForm({ searchParams }: { searchParams: Promise<{ error?: string; returnTo?: string }> }) {
   await connection();
   if (!signUpEnabled()) redirect('/auth/sign-in?register=1');
   const { error } = await searchParams;
@@ -70,5 +71,13 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
         </div>
       </section>
     </main>
+  );
+}
+
+export default function SignUp(props: { searchParams: Promise<{ error?: string; returnTo?: string }> }) {
+  return (
+    <Suspense fallback={<main className="min-h-dvh bg-forest" />}>
+      <SignUpForm {...props} />
+    </Suspense>
   );
 }
