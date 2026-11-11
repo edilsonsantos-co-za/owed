@@ -57,6 +57,13 @@ if [ -n "$secret" ] && { [ "$(get_env "$ENV_FILE" LOGTO_APP_SECRET)" != "$secret
   set_env LOGTO_APP_SECRET "$secret"
   echo "  linked to SSO as $SSO_APP_ID"
 fi
+# Owed's own email + password sign-up: the Management API client core-sso-webapp registers as owed-webapp-m2m
+m2m="$( [ -r "$SSO_ENV" ] && get_env "$SSO_ENV" SSO_APP_SECRET_OWED_WEBAPP_M2M || true)"
+if [ -n "$m2m" ] && [ "$(get_env "$ENV_FILE" LOGTO_M2M_APP_SECRET)" != "$m2m" ]; then
+  set_env LOGTO_M2M_APP_ID owed-webapp-m2m
+  set_env LOGTO_M2M_APP_SECRET "$m2m"
+  echo "  linked sign-up to SSO as owed-webapp-m2m"
+fi
 [ -n "$(get_env "$ENV_FILE" LOGTO_APP_SECRET)" ] || echo "::warning::No Logto secret for $SSO_APP_ID yet: the app runs open (no sign-in) until the SSO deploy registers it."
 
 echo "$ENV_FILE ready"

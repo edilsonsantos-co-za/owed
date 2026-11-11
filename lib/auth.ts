@@ -100,7 +100,10 @@ export interface Flow {
 }
 
 /** The Logto authorize URL plus the state/verifier to keep in a short-lived cookie. */
-export async function startFlow(config: AuthConfig, opts: { register?: boolean; returnTo?: string }) {
+export async function startFlow(
+  config: AuthConfig,
+  opts: { register?: boolean; returnTo?: string; oneTimeToken?: string; loginHint?: string },
+) {
   const flow: Flow = { state: random(16), verifier: random(32), returnTo: safeReturn(opts.returnTo) };
   const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(flow.verifier)));
   const url = new URL(`${config.endpoint}/oidc/auth`);
@@ -114,6 +117,8 @@ export async function startFlow(config: AuthConfig, opts: { register?: boolean; 
     code_challenge_method: 'S256',
     prompt: 'login',
     ...(opts.register ? { first_screen: 'register', interaction_mode: 'signUp' } : {}),
+    // Straight after Owed's own sign-up: Logto signs the new account in without a password prompt
+    ...(opts.oneTimeToken && opts.loginHint ? { one_time_token: opts.oneTimeToken, login_hint: opts.loginHint } : {}),
   }).toString();
   return { url: url.toString(), flow };
 }

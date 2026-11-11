@@ -31,9 +31,14 @@ async function Cta({ size = 'lg', dark = false }: { size?: 'lg' | 'sm'; dark?: b
     );
   }
   return (
-    <a href="/auth/sign-in" className={cx('inline-flex items-center gap-2 rounded-full font-medium transition-colors', primary, btn)}>
-      Sign in <ArrowRight className="size-4" />
-    </a>
+    <span className="inline-flex flex-wrap items-center gap-3">
+      <a href="/auth/register" className={cx('inline-flex items-center gap-2 rounded-full font-medium transition-colors', primary, btn)}>
+        Create account <ArrowRight className="size-4" />
+      </a>
+      <a href="/auth/sign-in" className={cx('font-medium underline-offset-4 hover:underline', big ? 'text-[15px]' : 'text-sm', dark ? 'text-[#f4f1ea]' : 'text-forest')}>
+        Sign in
+      </a>
+    </span>
   );
 }
 
