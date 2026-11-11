@@ -61,7 +61,7 @@ background:radial-gradient(110% 70% at 0% 0%,rgba(61,220,151,.16),transparent 60
   <div class="slip">
     <span class="stamp">BUILDER</span>
     <div class="k">Built by</div>
-    <div class="me"><img src="${asset('video/assets/edilson.jpg', 'image/jpeg')}"><div><div class="name">Edilson Santos</div><div class="role">Backend developer</div></div></div>
+    <div class="me"><img src="${asset('video/assets/edilson.jpg', 'image/jpeg')}"><div><div class="name">Edilson Santos</div><div class="role">Full-stack developer</div></div></div>
     <div class="rule"></div>
     <div class="row"><span>Experience</span><b>11 years, PHP in production</b></div>
     <div class="row"><span>Focus</span><b>APIs, automation, infrastructure</b></div>
@@ -109,7 +109,7 @@ export const SHOTS: Shot[] = [
   {
     id: 'title',
     narration:
-      "Hi, I'm Edilson Santos, a backend developer from Johannesburg. If you freelance, you know this one: the work is done, the invoice went out through PayPal, and now it's three weeks late. So I built Owed.",
+      "Hi, I'm Edilson Santos, a full-stack developer from Johannesburg. If you freelance, you know this one: the work is done, the invoice went out through PayPal, and now it's three weeks late. So I built Owed.",
     run: async (page) => {
       await page.setContent(intro(), { waitUntil: 'networkidle' });
       await pause(1500);

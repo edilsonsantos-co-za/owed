@@ -349,7 +349,7 @@ export default function Landing({ searchParams }: PageProps<'/'>) {
             <img src={AVATAR} alt="Edilson Santos" className="size-16 rounded-full object-cover ring-4 ring-sunken" />
             <div>
               <p className="serif text-3xl leading-none">Edilson Santos</p>
-              <p className="mt-1 text-sm text-muted">Backend developer · Johannesburg</p>
+              <p className="mt-1 text-sm text-muted">Full-stack developer · Johannesburg</p>
             </div>
           </div>
           <p className="mt-5 text-[15px] leading-relaxed text-ink-2">
