@@ -108,7 +108,7 @@ export async function startFlow(config: AuthConfig, opts: { register?: boolean; 
     client_id: config.appId,
     redirect_uri: `${config.baseUrl}/auth/callback`,
     response_type: 'code',
-    scope: 'openid profile email roles',
+    scope: 'openid profile email roles custom_data',
     state: flow.state,
     code_challenge: challenge,
     code_challenge_method: 'S256',
@@ -140,13 +140,28 @@ export async function finishFlow(config: AuthConfig, code: string, flow: Flow): 
     cache: 'no-store',
   });
   if (!res.ok) throw new Error(`Token exchange failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
-  const tokens = (await res.json()) as { id_token?: string };
+  const tokens = (await res.json()) as { id_token?: string; access_token?: string };
   if (!tokens.id_token) throw new Error('No ID token in the token response');
   const { payload } = await jwtVerify(tokens.id_token, jwks(config), {
     issuer: `${config.endpoint}/oidc`,
     audience: config.appId,
   });
-  return toUser(payload);
+  const user = toUser(payload);
+  user.email ??= tokens.access_token ? await contactEmail(config, tokens.access_token) : undefined;
+  return user;
+}
+
+/** Sign-up collects an unverified email (Logto custom field contact_email, no code sent); it lives in custom_data. */
+async function contactEmail(config: AuthConfig, accessToken: string): Promise<string | undefined> {
+  try {
+    const res = await fetch(`${config.internal}/oidc/me`, { headers: { authorization: `Bearer ${accessToken}` }, cache: 'no-store' });
+    if (!res.ok) return undefined;
+    const info = (await res.json()) as { custom_data?: { contact_email?: unknown } };
+    const email = info.custom_data?.contact_email;
+    return typeof email === 'string' && email.includes('@') ? email.trim().toLowerCase() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 let cachedJwks: ReturnType<typeof createRemoteJWKSet> | null = null;

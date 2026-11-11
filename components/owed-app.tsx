@@ -17,7 +17,7 @@ import MorningBrief from './morning-brief';
 import type { StudioSurface } from './studio-dashboard';
 import { Badge, Button, Logo, cx } from './ui';
 import SideNav, { type View } from './side-nav';
-import WelcomeTour, { SETUP_STEP, tourSeen } from './welcome-tour';
+import WelcomeTour, { SETUP_STEP, tourKey, tourSeen } from './welcome-tour';
 
 // AG Studio measures the DOM, so it renders in the browser only.
 const StudioDashboard = dynamic(() => import('./studio-dashboard'), {
@@ -63,6 +63,7 @@ interface Toast {
 }
 
 export interface AppUser {
+  id?: string;
   name?: string;
   email?: string;
   admin?: boolean;
@@ -156,8 +157,8 @@ export default function OwedApp({
   useEffect(() => {
     // First visit: explain the app before anything else. Read after mount, since localStorage is browser-only.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!tourSeen()) setTour({ open: true, step: 0 });
-  }, []);
+    if (!tourSeen(tourKey(user?.id))) setTour({ open: true, step: 0 });
+  }, [user?.id]);
 
   // Owed AI opens as a pop-up over whatever page is showing, so it never has to be found in the page.
   const openCopilot = useCallback(() => {
@@ -424,6 +425,7 @@ export default function OwedApp({
         key={`${tour.open}-${tour.step}`}
         open={tour.open}
         initialStep={tour.step}
+        seenKey={tourKey(user?.id)}
         setup={{ paypal: live, claude: aiEnabled, studio: !!licenseKey }}
         onClose={() => setTour((t) => ({ ...t, open: false }))}
         onView={(v) => {

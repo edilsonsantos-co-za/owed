@@ -301,9 +301,12 @@ function SetupStep({ setup }: { setup: Setup }) {
 
 const SEEN = 'owed.tour.v2';
 
-export function tourSeen() {
+/** Seen-flag key: per signed-in user, so every new account gets the tour on its first sign-in. */
+export const tourKey = (userId?: string) => (userId ? `${SEEN}:${userId}` : SEEN);
+
+export function tourSeen(key = SEEN) {
   try {
-    return localStorage.getItem(SEEN) === '1';
+    return localStorage.getItem(key) === '1';
   } catch {
     return true;
   }
@@ -317,7 +320,9 @@ export default function WelcomeTour({
   setup,
   onClose,
   onView,
+  seenKey = SEEN,
 }: {
+  seenKey?: string;
   open: boolean;
   initialStep?: number;
   setup: Setup;
@@ -333,7 +338,7 @@ export default function WelcomeTour({
 
   const close = () => {
     try {
-      localStorage.setItem(SEEN, '1');
+      localStorage.setItem(seenKey, '1');
     } catch {}
     onClose();
   };
