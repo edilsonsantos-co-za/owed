@@ -13,7 +13,7 @@ Last updated 11 Nov 2026. Submitted to Devpost: <https://devpost.com/software/ow
 | Sign-in | DataSparkLab SSO (Logto). Self sign-up needs an emailed code; mail is Mailgun sandbox (authorized recipients only), so judges use a test account |
 | App | Landing, dashboard (Overview, Clients, Approvals, Activity), Ask Owed, Customize, `/admin` (`owed-admin` role) |
 | Walkthrough | 11 steps on first visit (`owed.tour.v2`), opens each page and spotlights it; on the hosted demo the last step shows connection status |
-| Video | <https://www.youtube.com/watch?v=rwOyFtvEFLg> (2:27, recorded by `npm run video` on demo data; agent shots need a Claude key) |
+| Video | <https://www.youtube.com/watch?v=ZhHI00SAyu8> (2:27, re-uploaded 11 Nov with the full-stack intro; recorded by `npm run video` on demo data; agent shots need a Claude key) |
 | Submission assets | Moved out of the repo to `~/Desktop/Owed hackathon submission/` (Devpost text, gallery, brief, YouTube assets, rendered video) |
 
 ## After judging

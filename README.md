@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://owed.edilsonsantos.co.za"><b>Live demo</b></a> ·
-  <a href="https://www.youtube.com/watch?v=rwOyFtvEFLg"><b>Demo video</b></a> ·
+  <a href="https://www.youtube.com/watch?v=ZhHI00SAyu8"><b>Demo video</b></a> ·
   <a href="https://devpost.com/software/owed-mi23or"><b>Devpost</b></a> ·
   <a href="LICENSE">MIT licence</a>
 </p>
@@ -167,7 +167,7 @@ Design choices worth knowing:
 
 ## Demo video
 
-The [demo video](https://www.youtube.com/watch?v=rwOyFtvEFLg) is recorded by script from the real app
+The [demo video](https://www.youtube.com/watch?v=ZhHI00SAyu8) is recorded by script from the real app
 (`npm run video`, see [video/README.md](video/README.md)): Playwright drives the walkthrough, a local Kokoro
 voice reads each line, and ffmpeg stitches the shots. The voice-over is AI-generated.
 
