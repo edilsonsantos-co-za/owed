@@ -2,6 +2,7 @@
 // The session is a signed, http-only cookie; nothing about the user is kept server-side except the
 // sign-up log in lib/users.ts. With LOGTO_* unset (local dev), auth is off and the app is open.
 import { SignJWT, createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { isRevoked } from './revoked';
 
 export const SESSION_COOKIE = 'owed_session';
 export const FLOW_COOKIE = 'owed_oidc';
@@ -95,6 +96,8 @@ export async function readSession(token: string | undefined): Promise<SessionUse
   if (!config || !token) return null;
   try {
     const { payload } = await jwtVerify(token, config.secret, { algorithms: ['HS256'] });
+    // Account deleted or removed by an admin after this session was issued: treat it as signed out
+    if (await isRevoked(String(payload.sub), (payload.iat ?? 0) * 1000)) return null;
     return toUser(payload);
   } catch {
     return null;

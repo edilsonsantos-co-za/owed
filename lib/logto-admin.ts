@@ -33,15 +33,43 @@ async function token(c: NonNullable<ReturnType<typeof m2m>>): Promise<string> {
   return body.access_token;
 }
 
-async function api(path: string, body: unknown) {
+async function api(path: string, body?: unknown, method = 'POST') {
   const c = m2m();
   if (!c) throw new Error('Sign-up is not configured');
   return fetch(`${c.base}/api${path}`, {
-    method: 'POST',
+    method,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${await token(c)}` },
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     cache: 'no-store',
   });
+}
+
+/** Roles that can never be removed from Owed's admin page (the platform owner and Owed admins). */
+const PROTECTED_ROLES = ['es-owner', 'owed-admin'];
+
+export type RemoveResult = 'removed' | 'not-found' | 'protected' | 'failed';
+
+/**
+ * Deletes the person's DataSparkLab account in Logto (their sign-in for every DataSparkLab app), unless they
+ * hold an owner/admin role. 'not-found' means Logto has no such user any more, so only Owed's record remains.
+ */
+export async function removeLogtoUser(sub: string): Promise<RemoveResult> {
+  const id = encodeURIComponent(sub);
+  const roles = await api(`/users/${id}/roles`, undefined, 'GET');
+  if (roles.status === 404) return 'not-found';
+  if (!roles.ok) {
+    console.error('[owed] could not read roles before removing a user', roles.status);
+    return 'failed';
+  }
+  const names = ((await roles.json()) as { name: string }[]).map((r) => r.name);
+  if (names.some((n) => PROTECTED_ROLES.includes(n))) return 'protected';
+  const res = await api(`/users/${id}`, undefined, 'DELETE');
+  if (res.status === 404) return 'not-found';
+  if (!res.ok) {
+    console.error('[owed] Logto refused to delete a user', res.status);
+    return 'failed';
+  }
+  return 'removed';
 }
 
 export type SignUpResult = { ok: true; oneTimeToken: string } | { ok: false; error: 'exists' | 'password' | 'failed'; message?: string };
