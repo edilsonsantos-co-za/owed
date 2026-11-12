@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/seed-sandbox.ts",
     "typecheck": "tsc --noEmit",
-    "video": "node --env-file-if-exists=.env.local --import tsx video/make.ts"
+    "video": "node --env-file-if-exists=.env.local --import tsx video/make.ts",
+    "mail:gallery": "node --conditions=react-server --import tsx scripts/mail-gallery.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
@@ -21,6 +22,7 @@
     "jose": "^6.2.13",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
+    "nodemailer": "^6.9.16",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

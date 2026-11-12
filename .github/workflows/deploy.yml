@@ -81,13 +81,18 @@ jobs:
           PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
           AG_STUDIO_LICENSE_KEY: ${{ secrets.AG_STUDIO_LICENSE_KEY }}
           OWED_YOUTUBE_ID: ${{ secrets.OWED_YOUTUBE_ID }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
         run: |
           # Everything git tracks except env files (examples excepted): the server keeps its own .env*.
           # Each part ends in || true: the step runs with bash -e, and a grep that matches nothing would end the list early.
           { git ls-files | grep -vE '(^|/)\.env' || true ; git ls-files | grep -E '(^|/)\.env[^/]*\.example$' || true ; } | sort -u > .deploy-manifest.new
           tar -czf - -T .deploy-manifest.new .deploy-manifest.new | ssh vps "set -e; $REMOTE_SUDO mkdir -p '$APP_DIR'; $REMOTE_SUDO tar -xzf - -C '$APP_DIR'"
           # API keys travel inside the script on stdin (never on a command line), into server-env.sh's environment.
-          { printf 'export %s=%q\n' ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY" PAYPAL_CLIENT_ID "$PAYPAL_CLIENT_ID" PAYPAL_CLIENT_SECRET "$PAYPAL_CLIENT_SECRET" AG_STUDIO_LICENSE_KEY "$AG_STUDIO_LICENSE_KEY" OWED_YOUTUBE_ID "$OWED_YOUTUBE_ID"; cat <<'REMOTE'
+          { printf 'export %s=%q\n' ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY" PAYPAL_CLIENT_ID "$PAYPAL_CLIENT_ID" PAYPAL_CLIENT_SECRET "$PAYPAL_CLIENT_SECRET" AG_STUDIO_LICENSE_KEY "$AG_STUDIO_LICENSE_KEY" OWED_YOUTUBE_ID "$OWED_YOUTUBE_ID" SMTP_HOST "$SMTP_HOST" SMTP_PORT "$SMTP_PORT" SMTP_USERNAME "$SMTP_USERNAME" SMTP_PASSWORD "$SMTP_PASSWORD" MAIL_FROM_ADDRESS "$MAIL_FROM_ADDRESS"; cat <<'REMOTE'
           set -euo pipefail
           cd "$APP_DIR"
           # Files an earlier deploy shipped that are gone in this one

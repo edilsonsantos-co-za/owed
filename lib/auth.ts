@@ -69,6 +69,27 @@ export async function signSession(user: SessionUser, secret: Uint8Array): Promis
 
 export const sessionMaxAge = SESSION_DAYS * 86_400;
 
+/** One-hour link that confirms deleting this account (emailed, so only the inbox owner can use it). */
+export async function signDeleteToken(sub: string, secret: Uint8Array): Promise<string> {
+  return new SignJWT({ purpose: 'delete-account' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(sub)
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(secret);
+}
+
+export async function verifyDeleteToken(token: string, secret: Uint8Array): Promise<{ sub: string; issuedAt: number } | null> {
+  try {
+    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+    return payload.purpose === 'delete-account' && typeof payload.sub === 'string' && typeof payload.iat === 'number'
+      ? { sub: payload.sub, issuedAt: payload.iat * 1000 }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function readSession(token: string | undefined): Promise<SessionUser | null> {
   const config = authConfig();
   if (!config || !token) return null;

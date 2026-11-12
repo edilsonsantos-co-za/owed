@@ -2,7 +2,7 @@
 
 // The dashboard's side navigation, shared by /app and /admin. Inside the app the items switch views in
 // place (onGo); on other pages they are links back to /app?view=….
-import { CircleHelp, History, Inbox, LayoutDashboard, LogOut, ShieldCheck, UserCog, Users, type LucideIcon } from 'lucide-react';
+import { CircleHelp, History, Inbox, LayoutDashboard, CircleUser, LogOut, ShieldCheck, UserCog, Users, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Brand, cx } from './ui';
 
@@ -161,6 +161,9 @@ export default function SideNav({
               <span className="block truncate text-xs font-medium">{user.name || user.email}</span>
               <span className="block truncate text-[11px] text-white/50">{user.admin ? 'Administrator' : user.email}</span>
             </span>
+            <a href="/account" className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Your account">
+              <CircleUser className="size-4" />
+            </a>
             <a href="/auth/sign-out" className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Sign out">
               <LogOut className="size-4" />
             </a>

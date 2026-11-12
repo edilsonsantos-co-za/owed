@@ -40,7 +40,8 @@ ensure PAYPAL_API_BASE https://api-m.sandbox.paypal.com
 ensure OWED_BUSINESS_NAME "Owed Studio"
 ensure SESSION_SECRET "$(openssl rand -base64 48 | tr -d '\n')"
 
-for key in ANTHROPIC_API_KEY PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET AG_STUDIO_LICENSE_KEY OWED_YOUTUBE_ID; do
+# Mail (account emails) goes through the DataSparkLab mail service: the SMTP_* and MAIL_FROM_ADDRESS secrets
+for key in ANTHROPIC_API_KEY PAYPAL_CLIENT_ID PAYPAL_CLIENT_SECRET AG_STUDIO_LICENSE_KEY OWED_YOUTUBE_ID SMTP_HOST SMTP_PORT SMTP_USERNAME SMTP_PASSWORD MAIL_FROM_ADDRESS; do
   value="${!key:-}"
   if [ -n "$value" ] && [ "$(get_env "$ENV_FILE" "$key")" != "$value" ]; then
     set_env "$key" "$value"

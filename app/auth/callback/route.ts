@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { FLOW_COOKIE, SESSION_COOKIE, authConfig, finishFlow, publicUrl, sessionMaxAge, signSession, type Flow } from '@/lib/auth';
+import { sendEmail, welcomeEmail } from '@/lib/mail';
 import { recordSignIn } from '@/lib/users';
 
 export async function GET(request: NextRequest) {
@@ -17,7 +18,13 @@ export async function GET(request: NextRequest) {
   }
   try {
     const user = await finishFlow(config, code, flow);
-    await recordSignIn(user).catch((err) => console.error('[owed] could not record sign-in', err));
+    const isNew = await recordSignIn(user).catch((err) => {
+      console.error('[owed] could not record sign-in', err);
+      return false;
+    });
+    if (isNew && user.email) {
+      await sendEmail(user.email, welcomeEmail({ name: user.name, email: user.email, appUrl: `${base}/app`, accountUrl: `${base}/account` }));
+    }
     const res = NextResponse.redirect(`${base}${flow.returnTo}`);
     res.cookies.set(SESSION_COOKIE, await signSession(user, config.secret), {
       httpOnly: true,
