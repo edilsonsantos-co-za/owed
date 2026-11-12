@@ -105,7 +105,7 @@ export interface Flow {
 /** The Logto authorize URL plus the state/verifier to keep in a short-lived cookie. */
 export async function startFlow(
   config: AuthConfig,
-  opts: { register?: boolean; returnTo?: string; oneTimeToken?: string; loginHint?: string },
+  opts: { register?: boolean; returnTo?: string; resume?: boolean },
 ) {
   const flow: Flow = { state: random(16), verifier: random(32), returnTo: safeReturn(opts.returnTo) };
   const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(flow.verifier)));
@@ -118,10 +118,10 @@ export async function startFlow(
     state: flow.state,
     code_challenge: challenge,
     code_challenge_method: 'S256',
-    prompt: 'login',
+    // A normal sign-in always shows the form; resuming (see /auth/callback) reuses the Logto session the
+    // person just made, so they land in the app without signing in twice.
+    ...(opts.resume ? {} : { prompt: 'login' }),
     ...(opts.register ? { first_screen: 'register', interaction_mode: 'signUp' } : {}),
-    // Straight after Owed's own sign-up: Logto signs the new account in without a password prompt
-    ...(opts.oneTimeToken && opts.loginHint ? { one_time_token: opts.oneTimeToken, login_hint: opts.loginHint } : {}),
   }).toString();
   return { url: url.toString(), flow };
 }

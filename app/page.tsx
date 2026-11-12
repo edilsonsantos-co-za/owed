@@ -48,7 +48,7 @@ async function AuthNotice({ searchParams }: { searchParams: Promise<{ auth?: str
   return (
     <div className="mx-auto mt-4 max-w-6xl px-4">
       <p className="rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-sm text-warn">
-        {auth === 'expired' ? 'That sign-in link expired. Please try again.' : 'Sign-in did not complete. Please try again.'}
+        {auth === 'expired' ? 'Your sign-in timed out. Sign in again with your email and password.' : 'Sign-in did not complete. Please try again.'}
       </p>
     </div>
   );

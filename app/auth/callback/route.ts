@@ -3,6 +3,8 @@ import { FLOW_COOKIE, SESSION_COOKIE, authConfig, finishFlow, publicUrl, session
 import { sendEmail, welcomeEmail } from '@/lib/mail';
 import { recordSignIn } from '@/lib/users';
 
+const RESUME_COOKIE = 'owed_resume';
+
 export async function GET(request: NextRequest) {
   const config = authConfig();
   if (!config) return NextResponse.redirect(publicUrl('/app', request));
@@ -14,6 +16,14 @@ export async function GET(request: NextRequest) {
   } catch {}
   const code = params.get('code');
   if (!flow || !code || params.get('state') !== flow.state) {
+    // The person finished at Logto but this browser lost the flow (it took over an hour, or another tab
+    // started a new one). Their Logto session is fresh, so start once more without a prompt: they land
+    // signed in. RESUME_COOKIE stops a loop if that fails too.
+    if (code && !request.cookies.get(RESUME_COOKIE)) {
+      const res = NextResponse.redirect(`${base}/auth/sign-in?resume=1&returnTo=/app`);
+      res.cookies.set(RESUME_COOKIE, '1', { httpOnly: true, secure: base.startsWith('https'), sameSite: 'lax', path: '/auth', maxAge: 120 });
+      return res;
+    }
     return NextResponse.redirect(`${base}/?auth=expired`);
   }
   try {
@@ -34,6 +44,7 @@ export async function GET(request: NextRequest) {
       maxAge: sessionMaxAge,
     });
     res.cookies.delete({ name: FLOW_COOKIE, path: '/auth' });
+    res.cookies.delete({ name: RESUME_COOKIE, path: '/auth' });
     return res;
   } catch (err) {
     console.error('[owed] sign-in failed', err);

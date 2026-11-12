@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const { url, flow } = await startFlow(config, {
     register: request.nextUrl.searchParams.get('register') === '1',
     returnTo: returnTo ?? undefined,
+    resume: request.nextUrl.searchParams.get('resume') === '1',
   });
   const res = NextResponse.redirect(url);
   res.cookies.set(FLOW_COOKIE, JSON.stringify(flow), {
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
     secure: config.baseUrl.startsWith('https'),
     sameSite: 'lax',
     path: '/auth',
-    maxAge: 600,
+    // Sign-up (email, code from the inbox, password) can take a while: keep the flow for an hour
+    maxAge: 3600,
   });
   return res;
 }
