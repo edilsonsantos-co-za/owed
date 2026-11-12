@@ -18,7 +18,7 @@ const DAY = 86_400_000;
 const RESULTS: Record<string, (who?: string) => string> = {
   removed: (who) => `Removed ${who || 'the person'} from Owed and the DataSparkLab SSO. They are signed out everywhere.`,
   protected: () => 'That account holds an owner or admin role in the SSO, so it can’t be removed here.',
-  self: () => 'You can’t remove your own account here. Use “Your account” to delete it.',
+  self: () => 'You can’t remove your own account here. Use your profile page to delete it.',
   missing: () => 'That person is no longer in the list.',
   failed: () => 'The SSO did not remove the account. Nothing was changed; try again or check the Owed logs.',
 };

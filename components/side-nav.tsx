@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Brand, cx } from './ui';
 
 export type View = 'overview' | 'clients' | 'approvals' | 'activity';
-export type NavItem = View | 'admin';
+export type NavItem = View | 'admin' | 'account';
 
 export const NAV: Record<View, { label: string; icon: LucideIcon }> = {
   overview: { label: 'Overview', icon: LayoutDashboard },
@@ -161,7 +161,7 @@ export default function SideNav({
               <span className="block truncate text-xs font-medium">{user.name || user.email}</span>
               <span className="block truncate text-[11px] text-white/50">{user.admin ? 'Administrator' : user.email}</span>
             </span>
-            <a href="/account" className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Your account">
+            <a href="/account" aria-current={active === 'account' ? 'page' : undefined} className={cx('rounded-md p-1.5 hover:bg-white/10 hover:text-white', active === 'account' ? 'bg-white/10 text-mint' : 'text-white/50')} title="Your profile">
               <CircleUser className="size-4" />
             </a>
             <a href="/auth/sign-out" className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white" title="Sign out">

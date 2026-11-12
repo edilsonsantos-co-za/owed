@@ -2,7 +2,6 @@
 // npm run mail:gallery  [-- --to=gallery+owed@datasparklab.local]
 import {
   accountDeletedEmail,
-  deleteRequestEmail,
   welcomeEmail,
   type Email,
 } from "../lib/mail";
@@ -23,13 +22,6 @@ const emails: [string, Email][] = [
       email: to,
       appUrl: `${site}/app`,
       accountUrl: `${site}/account`,
-    }),
-  ],
-  [
-    "Confirm deletion",
-    deleteRequestEmail({
-      name: "Thandi Mokoena",
-      confirmUrl: `${site}/account?token=sample`,
     }),
   ],
   [

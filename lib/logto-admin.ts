@@ -1,6 +1,5 @@
-// Owed's own email + password sign-up. Logto's hosted sign-up only takes an email with a verification
-// code, and prod mail cannot reach the public yet, so Owed creates the account through the Logto
-// Management API (M2M app owed-webapp-m2m) and signs the person in with a one-time token. No email is sent.
+// Logto Management API (M2M app owed-webapp-m2m): the profile page (name, username, password) and the
+// admin page's "remove". Sign-up itself is Logto's hosted flow (email, emailed code, password).
 import 'server-only';
 import { authConfig } from './auth';
 
@@ -13,7 +12,7 @@ function m2m() {
   return config && id && secret ? { base: config.internal, id, secret } : null;
 }
 
-export const signUpEnabled = () => m2m() !== null;
+export const profileEnabled = () => m2m() !== null;
 
 let cached: { token: string; until: number } | null = null;
 async function token(c: NonNullable<ReturnType<typeof m2m>>): Promise<string> {
@@ -35,7 +34,7 @@ async function token(c: NonNullable<ReturnType<typeof m2m>>): Promise<string> {
 
 async function api(path: string, body?: unknown, method = 'POST') {
   const c = m2m();
-  if (!c) throw new Error('Sign-up is not configured');
+  if (!c) throw new Error('The Logto Management API is not configured');
   return fetch(`${c.base}/api${path}`, {
     method,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${await token(c)}` },
@@ -72,23 +71,57 @@ export async function removeLogtoUser(sub: string): Promise<RemoveResult> {
   return 'removed';
 }
 
-export type SignUpResult = { ok: true; oneTimeToken: string } | { ok: false; error: 'exists' | 'password' | 'failed'; message?: string };
+export interface Profile {
+  name: string;
+  username: string;
+  email: string;
+  hasPassword: boolean;
+}
 
-/** Creates the Logto user (email unverified, no mail sent) and returns a one-time sign-in token for it. */
-export async function createAccount(email: string, password: string, name?: string): Promise<SignUpResult> {
-  const created = await api('/users', { primaryEmail: email, password, ...(name ? { name } : {}) });
-  if (!created.ok) {
-    const err = (await created.json().catch(() => ({}))) as { code?: string; message?: string };
-    if (err.code === 'user.email_already_in_use') return { ok: false, error: 'exists' };
-    if (err.code?.startsWith('password.')) return { ok: false, error: 'password', message: err.message };
-    console.error('[owed] sign-up failed', created.status, err.code);
-    return { ok: false, error: 'failed' };
+/** The person's Logto profile, or null when the Management API is off or unreachable. */
+export async function getProfile(sub: string): Promise<Profile | null> {
+  if (!profileEnabled()) return null;
+  const res = await api(`/users/${encodeURIComponent(sub)}`, undefined, 'GET').catch(() => null);
+  if (!res?.ok) return null;
+  const u = (await res.json()) as { name?: string | null; username?: string | null; primaryEmail?: string | null; hasPassword?: boolean };
+  return { name: u.name ?? '', username: u.username ?? '', email: u.primaryEmail ?? '', hasPassword: u.hasPassword ?? true };
+}
+
+export type ProfileResult = 'saved' | 'username-taken' | 'username-invalid' | 'username-required' | 'failed';
+const USERNAME = /^[A-Z_a-z]\w{2,31}$/;
+
+/** Updates the display name and username. A username can only be cleared when an email can still sign in. */
+export async function updateProfile(sub: string, name: string, username: string): Promise<ProfileResult> {
+  const current = await getProfile(sub);
+  if (!current) return 'failed';
+  if (username && !USERNAME.test(username)) return 'username-invalid';
+  if (!username && !current.email) return 'username-required';
+  const body: Record<string, string | null> = { name: name || null };
+  if (username !== current.username) body.username = username || null;
+  const res = await api(`/users/${encodeURIComponent(sub)}`, body, 'PATCH');
+  if (res.ok) return 'saved';
+  const err = (await res.json().catch(() => ({}))) as { code?: string };
+  if (err.code === 'user.username_already_in_use') return 'username-taken';
+  if (err.code?.startsWith('guard.')) return 'username-invalid';
+  console.error('[owed] profile update failed', res.status, err.code);
+  return 'failed';
+}
+
+export type PasswordResult = 'saved' | 'wrong-current' | 'weak' | 'failed';
+
+/** Changes the password after checking the current one, so a borrowed signed-in browser can't take the account. */
+export async function changePassword(sub: string, current: string, next: string): Promise<PasswordResult> {
+  const id = encodeURIComponent(sub);
+  const check = await api(`/users/${id}/password/verify`, { password: current });
+  if (check.status === 422 || check.status === 400) return 'wrong-current';
+  if (!check.ok) {
+    console.error('[owed] password check failed', check.status);
+    return 'failed';
   }
-  const ott = await api('/one-time-tokens', { email, expiresIn: 600 });
-  if (!ott.ok) {
-    console.error('[owed] one-time token failed', ott.status);
-    return { ok: false, error: 'failed' };
-  }
-  const { token: oneTimeToken } = (await ott.json()) as { token: string };
-  return { ok: true, oneTimeToken };
+  const res = await api(`/users/${id}/password`, { password: next }, 'PATCH');
+  if (res.ok) return 'saved';
+  const err = (await res.json().catch(() => ({}))) as { code?: string };
+  if (res.status === 422 || err.code?.startsWith('password.')) return 'weak';
+  console.error('[owed] password change failed', res.status, err.code);
+  return 'failed';
 }

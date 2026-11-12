@@ -1,4 +1,4 @@
-// Account emails (welcome, delete confirmation, deleted), sent through the DataSparkLab mail service (useSend SMTP).
+// Account emails (welcome, account deleted), sent through the DataSparkLab mail service (useSend SMTP).
 // With SMTP_HOST unset nothing is sent: the email is logged, so local dev and the hosted demo never fail on mail.
 import 'server-only';
 import nodemailer from 'nodemailer';
@@ -36,27 +36,9 @@ export function welcomeEmail(o: { name?: string; email: string; appUrl: string; 
         p(`${hi(o.name)} your Owed account is ready.`) +
         p('Owed watches your PayPal invoices, shows who owes you and drafts polite reminders. Nothing reaches a client until you approve it.') +
         button(o.appUrl, 'Open your dashboard') +
-        small(`You signed in with your DataSparkLab account (${esc(o.email)}). You can delete your Owed account at any time from <a href="${esc(o.accountUrl)}" style="color:${EMAIL_MUTED};">your account page</a>.`),
+        small(`You signed in with your DataSparkLab account (${esc(o.email)}). Change your name or password, or delete your Owed account, any time from <a href="${esc(o.accountUrl)}" style="color:${EMAIL_MUTED};">your profile</a>.`),
     }),
-    text: `${o.name ? `Hi ${o.name.split(' ')[0]},` : 'Hi there,'} your Owed account is ready.\n\nOpen your dashboard: ${o.appUrl}\n\nDelete your Owed account at any time: ${o.accountUrl}`,
-  };
-}
-
-export function deleteRequestEmail(o: { name?: string; confirmUrl: string }): Email {
-  const subject = 'Confirm deleting your Owed account';
-  return {
-    subject,
-    html: render({
-      title: subject,
-      preheader: 'Someone asked to delete your Owed account. The link works for one hour.',
-      eyebrow: 'Account',
-      body:
-        p(`${hi(o.name)} we got a request to delete your Owed account.`) +
-        p('This removes your Owed account and signs you out. Your DataSparkLab sign-in, which other apps use too, stays as it is.') +
-        button(o.confirmUrl, 'Delete my Owed account') +
-        small("The link works for one hour. Didn't ask for this? Ignore this email: nothing is deleted without the link."),
-    }),
-    text: `We got a request to delete your Owed account.\n\nConfirm within one hour: ${o.confirmUrl}\n\nDidn't ask for this? Ignore this email: nothing is deleted without the link.`,
+    text: `${o.name ? `Hi ${o.name.split(' ')[0]},` : 'Hi there,'} your Owed account is ready.\n\nOpen your dashboard: ${o.appUrl}\n\nYour profile (name, password, delete your account): ${o.accountUrl}`,
   };
 }
 
