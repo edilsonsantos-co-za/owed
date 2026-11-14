@@ -50,8 +50,9 @@ Get it from console.anthropic.com → API keys. Usage is billed to that account;
 - [ ] Approving a reminder sends it through PayPal. Log in to sandbox.paypal.com with the sandbox **business** account
       (developer dashboard → **Sandbox accounts**) and check the invoice under Invoicing. Sandbox never emails real people.
 - [ ] Approving a new invoice creates and sends it in the sandbox. **Refresh** in Owed shows it.
-- [ ] After approval, the draft becomes a read-only **Client preview** with the approved content and PayPal's
-      acceptance result. **View as client** opens PayPal's actual sandbox invoice in a new tab, not a replica
+- [ ] After approval, subject/message fields and line items disappear, leaving **Client preview** and
+      **Why the agent chose this**. The approved content remains saved in the send record.
+      **View as client** opens PayPal's actual sandbox invoice in a new tab, not a replica
       email. Sandbox notifications never reach external inboxes; acceptance is not proof of delivery.
       Select other records under **Recently handled** (or **Choose a draft** on mobile).
 - [ ] If PayPal's invoice lookup fails after a successful send, the draft stays sent and explains that the

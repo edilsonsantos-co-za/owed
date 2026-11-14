@@ -80,7 +80,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
                 : draft.status === 'failed' ? `Send failed: ${draft.error ?? 'PayPal did not confirm the send.'}` : 'This draft was discarded, not sent.'}
             </p>
             {draft.status === 'sent' && (
-              <p className="text-muted">The content below is Owed&apos;s record of your approved message, not a retrieved PayPal notification email.</p>
+              <p className="text-muted">This is Owed&apos;s send record, not a retrieved PayPal notification email.</p>
             )}
             {draft.delivery?.mode === 'sandbox' && (
               <p className="text-muted">PayPal Sandbox: no real money or external email delivery. The client view opens the actual sandbox invoice.</p>
@@ -114,7 +114,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
           </div>
         </div>
 
-        {draft.kind === 'reminder' && (
+        {draft.status !== 'sent' && draft.kind === 'reminder' && (
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-muted">Subject</span>
             <input
@@ -127,7 +127,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
           </label>
         )}
 
-        {draft.kind === 'invoice' && (
+        {draft.status !== 'sent' && draft.kind === 'invoice' && (
           <div>
             <span className="mb-1 block text-xs font-medium text-muted">Line items</span>
             <div className="overflow-hidden rounded-lg border border-line">
@@ -148,7 +148,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
           </div>
         )}
 
-        <label className="block">
+        {draft.status !== 'sent' && <label className="block">
           <span className="mb-1 block text-xs font-medium text-muted">{draft.kind === 'reminder' ? 'Message' : 'Note to client'}</span>
           <textarea
             value={note}
@@ -158,7 +158,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
             rows={8}
             className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-ai focus:ring-3 focus:ring-ai/15"
           />
-        </label>
+        </label>}
         {error && <p className="rounded-lg bg-bad-soft px-3 py-2 text-[13px] text-bad">{error}</p>}
       </div>
 
