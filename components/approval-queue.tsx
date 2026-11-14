@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, Check, CheckCircle2, FileText, Inbox, Send, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
+import { Bot, Check, CheckCircle2, CircleAlert, ExternalLink, FileText, Inbox, Send, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { Draft } from '@/lib/store';
 import { ago, money, shortDate } from '@/lib/format';
@@ -21,6 +21,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
   const [note, setNote] = useState(draft.note);
   const [busy, setBusy] = useState<'send' | 'discard' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const readOnly = draft.status !== 'pending';
 
   const act = async (action: 'send' | 'discard') => {
     setBusy(action);
@@ -44,15 +45,16 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col" data-testid="draft-card">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col" data-testid="draft-card">
       <header className="flex flex-wrap items-start gap-3 border-b border-line px-6 py-4">
         <Avatar name={draft.client} size={40} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="truncate text-base font-semibold text-ink">{draft.client}</h2>
             <KindBadge draft={draft} />
+            {readOnly && <Badge tone={draft.status === 'sent' ? 'good' : draft.status === 'failed' ? 'bad' : 'neutral'}>{draft.status}</Badge>}
           </div>
-          <p className="mt-0.5 text-[13px] text-muted">
+          <p className="mt-0.5 break-words text-[13px] text-muted">
             {draft.kind === 'reminder'
               ? `${draft.invoiceNumber} · ${draft.daysOverdue > 0 ? `${draft.daysOverdue} days overdue` : 'not yet due'} · to ${draft.clientId}`
               : `Due in ${draft.dueInDays} days · to ${draft.recipientName} <${draft.clientId}>`}
@@ -65,6 +67,42 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
       </header>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+        {readOnly && (
+          <section aria-label="Client preview" className="space-y-2 rounded-lg border border-line bg-canvas p-4 text-[13px] leading-relaxed">
+            <h3 className="font-semibold text-ink">Client preview</h3>
+            <p className="text-ink-2">
+              {draft.status === 'sent'
+                ? draft.delivery?.mode === 'demo'
+                  ? 'Simulated send. No request was sent to PayPal.'
+                  : draft.delivery
+                    ? `PayPal accepted the ${draft.kind === 'reminder' ? 'reminder' : 'invoice'} send request. This is not proof of email delivery.`
+                    : 'Marked as sent. PayPal confirmation was not recorded for this older draft.'
+                : draft.status === 'failed' ? `Send failed: ${draft.error ?? 'PayPal did not confirm the send.'}` : 'This draft was discarded, not sent.'}
+            </p>
+            {draft.status === 'sent' && (
+              <p className="text-muted">The content below is Owed&apos;s record of your approved message, not a retrieved PayPal notification email.</p>
+            )}
+            {draft.delivery?.mode === 'sandbox' && (
+              <p className="text-muted">PayPal Sandbox: no real money or external email delivery. The client view opens the actual sandbox invoice.</p>
+            )}
+            {draft.status === 'sent' && draft.delivery?.mode !== 'demo' && (
+              draft.delivery?.invoiceUrl ? (
+                <a
+                  href={draft.delivery.invoiceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 py-2 font-medium text-ink hover:bg-sunken focus-visible:outline-2 focus-visible:outline-brand"
+                >
+                  View as client <ExternalLink className="size-4" aria-hidden="true" />
+                  <span className="sr-only">(opens PayPal in a new tab)</span>
+                </a>
+              ) : <p className="text-muted">A PayPal client-view link is unavailable for this draft. Do not resend it to obtain a preview.</p>
+            )}
+            {draft.paypalId && draft.delivery?.mode !== 'demo' && (
+              <p className="break-all text-xs text-muted">Invoice ID: {draft.paypalId}</p>
+            )}
+          </section>
+        )}
         <div className="flex gap-3 rounded-lg border border-ai/15 bg-ai-soft/60 p-3">
           <Bot className="mt-0.5 size-4 shrink-0 text-ai" />
           <div className="text-[13px] leading-relaxed">
@@ -82,6 +120,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
             <input
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
+              readOnly={readOnly}
               aria-label="Subject"
               className="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-ink outline-none focus:border-ai focus:ring-3 focus:ring-ai/15"
             />
@@ -114,6 +153,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            readOnly={readOnly}
             aria-label="Message"
             rows={8}
             className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3 py-2.5 text-sm leading-relaxed text-ink outline-none focus:border-ai focus:ring-3 focus:ring-ai/15"
@@ -122,7 +162,11 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
         {error && <p className="rounded-lg bg-bad-soft px-3 py-2 text-[13px] text-bad">{error}</p>}
       </div>
 
-      <footer className="flex flex-wrap items-center gap-3 border-t border-line bg-canvas/60 px-6 py-3">
+      {readOnly ? (
+        <footer className="border-t border-line bg-canvas/60 px-6 py-3 text-xs text-muted">
+          Read-only record{draft.resolvedAt ? ` · ${shortDate(draft.resolvedAt)}` : ''}
+        </footer>
+      ) : <footer className="flex flex-wrap items-center gap-3 border-t border-line bg-canvas/60 px-6 py-3">
         <p className="flex items-center gap-1.5 text-xs text-muted">
           <ShieldCheck className="size-3.5" />
           {live ? 'Sends through PayPal Invoicing when you approve.' : 'Demo data: approving simulates the PayPal call.'}
@@ -137,7 +181,7 @@ function DraftEditor({ draft, live, onDone }: { draft: Draft; live: boolean; onD
             {busy === 'send' ? 'Sending…' : live ? 'Approve & send via PayPal' : 'Approve & send (demo)'}
           </Button>
         </div>
-      </footer>
+      </footer>}
     </div>
   );
 }
@@ -159,13 +203,29 @@ export default function ApprovalQueue({
   const pending = drafts
     .filter((d) => d.status === 'pending')
     .sort((a, b) => (b.kind === 'reminder' ? b.daysOverdue : -1) - (a.kind === 'reminder' ? a.daysOverdue : -1));
-  const resolved = drafts.filter((d) => d.status !== 'pending').slice(0, 8);
+  const resolved = drafts
+    .filter((d) => d.status !== 'pending')
+    .sort((a, b) => (b.resolvedAt ?? b.createdAt).localeCompare(a.resolvedAt ?? a.createdAt))
+    .slice(0, 8);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = pending.find((d) => d.id === selectedId) ?? pending[0];
+  const selected = drafts.find((d) => d.id === selectedId) ?? pending[0] ?? resolved[0];
   const total = pending.reduce((a, d) => a + d.amount, 0);
 
   return (
-    <Card className="flex min-h-[560px] flex-1 overflow-hidden">
+    <Card className="flex min-h-[560px] flex-1 flex-col overflow-hidden md:flex-row">
+      <label className="border-b border-line p-4 text-xs font-medium text-muted md:hidden">
+        Choose a draft
+        <select
+          value={selected?.id ?? ''}
+          onChange={(e) => setSelectedId(e.target.value)}
+          className="mt-1 block w-full min-w-0 rounded-lg border border-line-strong bg-surface p-2 text-sm text-ink"
+        >
+          {!selected && <option value="">No drafts</option>}
+          {[...pending, ...resolved].map((d) => (
+            <option key={d.id} value={d.id}>{d.client} · {d.kind === 'reminder' ? d.invoiceNumber : 'invoice'} · {d.status}</option>
+          ))}
+        </select>
+      </label>
       <aside className="flex w-full max-w-[320px] shrink-0 flex-col border-r border-line max-md:hidden">
         <div className="border-b border-line px-4 py-3">
           <p className="text-[13px] font-semibold text-ink">Waiting for you</p>
@@ -176,6 +236,7 @@ export default function ApprovalQueue({
             <li key={d.id}>
               <button
                 onClick={() => setSelectedId(d.id)}
+                aria-pressed={d.id === selected?.id}
                 className={cx(
                   'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
                   d.id === selected?.id ? 'bg-ai-soft/70 ring-1 ring-ai/20' : 'hover:bg-canvas',
@@ -201,12 +262,21 @@ export default function ApprovalQueue({
             <>
               <li className="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wide text-faint">Recently handled</li>
               {resolved.map((d) => (
-                <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-xs text-muted">
-                  {d.status === 'sent' ? <CheckCircle2 className="size-4 text-good" /> : <Trash2 className="size-4 text-faint" />}
-                  <span className="truncate">
-                    {d.client} · {d.kind === 'reminder' ? d.invoiceNumber : 'invoice'}
-                  </span>
-                  <span className="ml-auto whitespace-nowrap">{d.status === 'failed' ? 'failed' : d.resolvedAt ? shortDate(d.resolvedAt) : d.status}</span>
+                <li key={d.id}>
+                  <button
+                    onClick={() => setSelectedId(d.id)}
+                    aria-pressed={d.id === selected?.id}
+                    className={cx(
+                      'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-xs text-muted transition-colors',
+                      d.id === selected?.id ? 'bg-ai-soft/70 ring-1 ring-ai/20' : 'hover:bg-canvas',
+                    )}
+                  >
+                    {d.status === 'sent' ? <CheckCircle2 className="size-4 shrink-0 text-good" /> : d.status === 'failed' ? <CircleAlert className="size-4 shrink-0 text-bad" /> : <Trash2 className="size-4 shrink-0 text-faint" />}
+                    <span className="truncate">
+                      {d.client} · {d.kind === 'reminder' ? d.invoiceNumber : 'invoice'}
+                    </span>
+                    <span className="ml-auto whitespace-nowrap">{d.status}</span>
+                  </button>
                 </li>
               ))}
             </>
@@ -221,7 +291,7 @@ export default function ApprovalQueue({
           live={live}
           onDone={(message) => {
             onNotify(message);
-            setSelectedId(null);
+            setSelectedId(selected.id);
             onChange();
           }}
         />

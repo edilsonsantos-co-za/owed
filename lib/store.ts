@@ -46,6 +46,10 @@ export type Draft = (ReminderDraft | InvoiceDraft) & {
   resolvedAt?: string;
   error?: string;
   paypalId?: string;
+  delivery?: {
+    mode: 'sandbox' | 'live' | 'demo';
+    invoiceUrl?: string;
+  };
 };
 
 export interface AuditEntry {
@@ -115,7 +119,7 @@ export async function addDraft(draft: (ReminderDraft | InvoiceDraft) & { rationa
   return entry;
 }
 
-export async function updateDraft(id: string, patch: Partial<Pick<Draft, 'status' | 'error' | 'paypalId'>> & { subject?: string; note?: string }) {
+export async function updateDraft(id: string, patch: Partial<Pick<Draft, 'status' | 'error' | 'paypalId' | 'delivery'>> & { subject?: string; note?: string }) {
   const store = await load();
   const draft = store.drafts.find((d) => d.id === id);
   if (!draft) return undefined;

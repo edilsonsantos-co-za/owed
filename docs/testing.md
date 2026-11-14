@@ -12,6 +12,9 @@ The **Connections** card in the sidebar, and the last step of **How Owed works**
 
 `AG_STUDIO_LICENSE_KEY` is optional at every stage. It only removes the trial watermark.
 
+Run `npm test` for client-preview regressions. These use mocked PayPal responses and an isolated temporary
+store; they never send notifications or modify your local or sandbox invoices.
+
 ## Stage 1: demo data, no keys
 
 - [ ] First visit opens **How Owed works**. Step through it; **Start using Owed** closes it and it does not come back on reload.
@@ -47,6 +50,14 @@ Get it from console.anthropic.com → API keys. Usage is billed to that account;
 - [ ] Approving a reminder sends it through PayPal. Log in to sandbox.paypal.com with the sandbox **business** account
       (developer dashboard → **Sandbox accounts**) and check the invoice under Invoicing. Sandbox never emails real people.
 - [ ] Approving a new invoice creates and sends it in the sandbox. **Refresh** in Owed shows it.
+- [ ] After approval, the draft becomes a read-only **Client preview** with the approved content and PayPal's
+      acceptance result. **View as client** opens PayPal's actual sandbox invoice in a new tab, not a replica
+      email. Sandbox notifications never reach external inboxes; acceptance is not proof of delivery.
+      Select other records under **Recently handled** (or **Choose a draft** on mobile).
+- [ ] If PayPal's invoice lookup fails after a successful send, the draft stays sent and explains that the
+      client-view link is unavailable. Older records without send metadata make no claim of PayPal confirmation.
+- [ ] In demo mode, the preview says the send was simulated and has no PayPal link. Failed and discarded drafts
+      remain read-only and do not claim a successful send.
 - [ ] A PayPal error (for example, a wrong secret) shows as a red banner or on the draft, not a blank page.
 
 Set `OWED_MODE=demo` to go back to demo data without removing the PayPal keys.

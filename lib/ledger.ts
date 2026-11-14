@@ -23,6 +23,19 @@ export async function getLedger(): Promise<Ledger> {
 
 const isoDay = (offsetDays = 0) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
 
+async function recordSent(id: string, paypalId: string, mode: NonNullable<Draft['delivery']>['mode']): Promise<Draft> {
+  const sent = (await updateDraft(id, { status: 'sent', paypalId, delivery: { mode } }))!;
+  if (mode === 'demo') return sent;
+  // A missing preview must never turn an accepted send into a failed draft that could be resent.
+  try {
+    const invoiceUrl = await paypal.getRecipientViewUrl(paypalId);
+    if (invoiceUrl) return (await updateDraft(id, { delivery: { mode, invoiceUrl } }))!;
+  } catch {
+    console.warn('[owed] PayPal accepted the send, but the client-view link could not be retrieved');
+  }
+  return sent;
+}
+
 /** Send an approved draft through PayPal. Only ever called from a human click. */
 export async function sendDraft(id: string, edits?: { subject?: string; note?: string }): Promise<Draft> {
   const draft = await getDraft(id);
@@ -30,18 +43,20 @@ export async function sendDraft(id: string, edits?: { subject?: string; note?: s
   if (draft.status !== 'pending') throw new Error(`Draft is already ${draft.status}`);
   if (edits) await updateDraft(id, edits);
   const current = (await getDraft(id))!;
+  const live = isLive();
+  const mode = live ? (paypal.isSandbox() ? 'sandbox' : 'live') : 'demo';
 
   try {
     if (current.kind === 'reminder') {
-      if (isLive()) await paypal.sendReminder(current.invoiceId, current.subject, current.note);
+      if (live) await paypal.sendReminder(current.invoiceId, current.subject, current.note);
       await logReminder(current.invoiceId);
       await audit({
         actor: 'human',
-        action: 'sent reminder via PayPal',
+        action: live ? 'sent reminder via PayPal' : 'simulated reminder',
         detail: `${current.client} · ${current.invoiceNumber} · ${current.tone}`,
         invoiceId: current.invoiceId,
       });
-      return (await updateDraft(id, { status: 'sent' }))!;
+      return await recordSent(id, current.invoiceId, mode);
     }
 
     const invoice = {
@@ -55,7 +70,7 @@ export async function sendDraft(id: string, edits?: { subject?: string; note?: s
       items: current.items,
     };
     let paypalId: string;
-    if (isLive()) {
+    if (live) {
       const created = await paypal.createInvoice(invoice);
       await paypal.sendInvoice(created.id);
       paypalId = created.id;
@@ -84,8 +99,8 @@ export async function sendDraft(id: string, edits?: { subject?: string; note?: s
         due_amount: { currency_code: invoice.currency, value: total },
       });
     }
-    await audit({ actor: 'human', action: 'sent invoice via PayPal', detail: `${current.client} · ${money(current.amount, current.currency, true)}`, invoiceId: paypalId });
-    return (await updateDraft(id, { status: 'sent', paypalId }))!;
+    await audit({ actor: 'human', action: live ? 'sent invoice via PayPal' : 'simulated invoice', detail: `${current.client} · ${money(current.amount, current.currency, true)}`, invoiceId: paypalId });
+    return await recordSent(id, paypalId, mode);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await audit({ actor: 'system', action: 'PayPal call failed', detail: message });

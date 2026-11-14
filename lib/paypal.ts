@@ -5,6 +5,7 @@ import 'server-only';
 const BASE_URL = process.env.PAYPAL_API_BASE ?? 'https://api-m.sandbox.paypal.com';
 
 export const hasPayPalCredentials = () => !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
+export const isSandbox = () => new URL(BASE_URL).hostname.endsWith('.sandbox.paypal.com');
 
 export interface Money {
   currency_code: string;
@@ -21,7 +22,7 @@ export interface PayPalInvoice {
     note?: string;
     memo?: string;
     payment_term?: { term_type?: string; due_date?: string };
-    metadata?: { create_time?: string; last_update_time?: string };
+    metadata?: { create_time?: string; last_update_time?: string; recipient_view_url?: string };
   };
   invoicer?: { business_name?: string; email_address?: string };
   primary_recipients?: {
@@ -128,6 +129,18 @@ export async function listInvoices(): Promise<PayPalInvoice[]> {
 }
 
 export const getInvoice = (id: string) => call<PayPalInvoice>('GET', `/v2/invoicing/invoices/${id}`);
+
+export async function getRecipientViewUrl(id: string): Promise<string | undefined> {
+  const invoice = await getInvoice(id);
+  const value = invoice.detail.metadata?.recipient_view_url;
+  if (!value) return undefined;
+  const url = new URL(value);
+  if (
+    url.protocol === 'https:' &&
+    ['paypal.com', 'www.paypal.com', 'sandbox.paypal.com', 'www.sandbox.paypal.com'].includes(url.hostname) &&
+    !url.username && !url.password && !url.port
+  ) return url.href;
+}
 
 export async function sendReminder(id: string, subject: string, note: string) {
   await call('POST', `/v2/invoicing/invoices/${id}/remind`, {
